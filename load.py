@@ -11,7 +11,7 @@ class LoadAudio:
     def load_all(self, audio_dir, labels_path=None):
         # Check if audio directory exists
         if not os.path.exists(audio_dir):
-            raise ValueError(f"Audio directory {self.audio_dir} does not exist.")
+            raise ValueError(f"Audio directory {audio_dir} does not exist.")
         
         labels = []
         audio_info_list = []
