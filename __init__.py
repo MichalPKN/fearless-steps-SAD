@@ -7,6 +7,10 @@ import argparse
 import torch
 from torch.utils.data import Dataset, DataLoader
 
+
+debug = False
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--datadir", type=str, required=False, help="path to where FSC_P4_Streams is located")
 args = parser.parse_args()
@@ -17,11 +21,17 @@ train_labels = os.path.join(datadir_path, "FSC_P4_Streams", "Transcripts", "SAD"
 dev_path = os.path.join(datadir_path, "FSC_P4_Streams", "Audio", "Streams", "Dev")
 dev_labels = os.path.join(datadir_path, "FSC_P4_Streams", "Transcripts", "SAD", "Dev")
 
-print(train_path)
-
-data_loader = load.LoadAudio(debug=True)
+data_loader = load.LoadAudio(debug=debug)
 X, audio_info_list, Y = data_loader.load_all(train_path, train_labels)
 
+device = (
+    "cuda"
+    if torch.cuda.is_available()
+    else "mps"
+    if torch.backends.mps.is_available()
+    else "cpu"
+)
+print(f"Using {device} device")
 
 class SADDataset(Dataset):
     def __init__(self, X, Y, min_len=None):
@@ -44,15 +54,35 @@ class SADDataset(Dataset):
 dataset = SADDataset(X, Y)
 dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
 
-input_size = 40  # feature size from MFCC
-hidden_size = 256
-num_layers = 3  # LSTM layers
+input_size = 40  # MFCC features
+hidden_size = [64, 32, 16] if debug else [512, 256, 128]
+#num_layers = 3 
 
-sad_model = model.SADModel(input_size, hidden_size, num_layers)
+sad_model = model.SADModel(input_size, hidden_size).to(device)
+epochs = 2 if debug else 20
+criterion = torch.nn.BCELoss()  # Binary Cross-Entropy for binary output
+optimizer = torch.optim.Adam(sad_model.parameters(), lr=0.001)
 
 print("training model")
-for batch_x, batch_y in dataloader:
-    output = sad_model(batch_x) 
+sad_model.train()
+for epoch in range(epochs):
+    running_loss = 0.0
+    for batch_x, batch_y in dataloader:
+        batch_x, batch_y = batch_x.to(device), batch_y.to(device)
+        
+        optimizer.zero_grad()
+        
+        # Forward pass
+        outputs = sad_model(batch_x)
+        loss = criterion(outputs, batch_y)
+        
+        # Backward pass and optimize
+        loss.backward()
+        optimizer.step()
+        
+        running_loss += loss.item()
+    
+    print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/len(dataloader):.4f}")
 print("finished training model")
-print("last batch: ", output.shape, "mean: ", output.mean())
+#print("last batch: ", output.shape, "mean: ", output.mean())
 
