@@ -2,21 +2,22 @@ import load
 import model
 import numpy as np
 import os
+import argparse
 
 import torch
 from torch.utils.data import Dataset, DataLoader
 
-# train_path = "FSC_P4_Streams\Audio\Streams\Train"
-# train_labels = "FSC_P4_Streams\Transcripts\SAD\Train"
-# dev_path = "FSC_P4_Streams\Audio\Streams\Dev"
-# dev_labels = "FSC_P4_Streams\Transcripts\SAD\Dev"
+parser = argparse.ArgumentParser()
+parser.add_argument("--datadir", type=str, required=False, help="path to where FSC_P4_Streams is located")
+args = parser.parse_args()
 
-current_path = os.path.dirname(os.path.abspath(__file__))
-train_path = os.path.join(current_path, "FSC_P4_Streams\Audio\Streams\Train")
-train_labels = os.path.join(current_path, "FSC_P4_Streams\Transcripts\SAD\Train")
-dev_path = os.path.join(current_path, "FSC_P4_Streams\Audio\Streams\Dev")
-dev_labels = os.path.join(current_path, "FSC_P4_Streams\Transcripts\SAD\Dev")
+datadir_path = args.datadir or ""
+train_path = os.path.join(datadir_path, "FSC_P4_Streams", "Audio", "Streams", "Train")
+train_labels = os.path.join(datadir_path, "FSC_P4_Streams", "Transcripts", "SAD", "Train")
+dev_path = os.path.join(datadir_path, "FSC_P4_Streams", "Audio", "Streams", "Dev")
+dev_labels = os.path.join(datadir_path, "FSC_P4_Streams", "Transcripts", "SAD", "Dev")
 
+print(train_path)
 
 data_loader = load.LoadAudio(debug=True)
 X, audio_info_list, Y = data_loader.load_all(train_path, train_labels)
