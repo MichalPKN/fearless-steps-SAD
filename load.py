@@ -82,7 +82,7 @@ class LoadAudio:
         with open(labels_path, "r") as f:
             label_file = f.readlines()
         
-        labels = np.zeros(mfcc.shape[0])
+        labels = np.zeros((mfcc.shape[0], 1))
         for line in label_file:
             line_data = line.split()
             start_time = line_data[2]
@@ -90,7 +90,7 @@ class LoadAudio:
             label = 1 if line_data[4] == "S" else 0
             start = int(float(start_time) / self.frame_length)
             end = int(float(end_time) / self.frame_length)
-            labels[start:end] = int(label)
+            labels[start:end, 0] = int(label)
         
         return labels
 
