@@ -33,6 +33,11 @@ device = (
 )
 print(f"Using {device} device")
 
+print("CUDA available:", torch.cuda.is_available())
+print("CUDA device count:", torch.cuda.device_count())
+print("CUDA current device:", torch.cuda.current_device())
+print("CUDA device name:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "No GPU detected")
+
 class SADDataset(Dataset):
     def __init__(self, X, Y, min_len=None):
         self.X = X  # List of feature matrices
