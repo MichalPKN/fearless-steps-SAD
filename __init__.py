@@ -33,18 +33,27 @@ device = (
 )
 print(f"Using {device} device")
 
-print("CUDA available:", torch.cuda.is_available())
-print("CUDA device count:", torch.cuda.device_count())
-print("CUDA current device:", torch.cuda.current_device())
-print("CUDA device name:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "No GPU detected")
+try:
+    print("CUDA available:", torch.cuda.is_available())
+    print("CUDA device count:", torch.cuda.device_count())
+    print("CUDA current device:", torch.cuda.current_device())
+    print("CUDA device name:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "No GPU detected")
+except Exception as e:
+    print("Failed to get CUDA device info. Error:", e)
 
-print("PyTorch version:", torch.__version__)
-print("CUDA version compiled with PyTorch:", torch.version.cuda)
-print("CUDA runtime version:", torch._C._cuda_getDriverVersion() if torch.cuda.is_available() else "No CUDA runtime available")
+try:
+    print("PyTorch version:", torch.__version__)
+    print("CUDA version compiled with PyTorch:", torch.version.cuda)    
+    print("CUDA runtime version:", torch._C._cuda_getDriverVersion() if torch.cuda.is_available() else "No CUDA runtime available")
+except Exception as e:
+    print("Failed to get PyTorch info. Error:", e)
 
-print("CUDA_HOME:", os.environ.get("CUDA_HOME"))
-print("LD_LIBRARY_PATH:", os.environ.get("LD_LIBRARY_PATH"))
-print("PATH:", os.environ.get("PATH"))
+try:
+    print("CUDA_HOME:", os.environ.get("CUDA_HOME"))
+    print("LD_LIBRARY_PATH:", os.environ.get("LD_LIBRARY_PATH"))
+    print("PATH:", os.environ.get("PATH"))
+except Exception as e:
+    print("Failed to get environment variables. Error:", e)
 
 try:
     x = torch.rand(3, 3).to("cuda")
@@ -74,11 +83,11 @@ dataset = SADDataset(X, Y)
 dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
 
 input_size = 40  # MFCC features
-hidden_size = [64, 32, 16] if debug else [512, 256, 128]
+hidden_size = [64, 32, 16] if debug else [256, 128, 64]
 #num_layers = 3 
 
 sad_model = model.SADModel(input_size, hidden_size).to(device)
-epochs = 2 if debug else 20
+epochs = 2 if debug else 10
 criterion = torch.nn.BCELoss()  # Binary Cross-Entropy for binary output
 optimizer = torch.optim.Adam(sad_model.parameters(), lr=0.001)
 
