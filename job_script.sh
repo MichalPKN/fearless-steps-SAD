@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -q gpu@pbs-m1.metacentrum.cz
-#PBS -l walltime=3:0:0
-#PBS -l select=1:ncpus=1:ngpus=1:mem=32gb:scratch_ssd=32gb
+#PBS -l walltime=4:0:0
+#PBS -l select=1:ncpus=1:ngpus=1:mem=32gb:scratch_ssd=32gb:cuda_version=12.6
 #PBS -N Training_script
 DATADIR=/storage/brno2/home/miapp/fearless-steps-SAD/fearless-steps-SAD
 chmod 700 $SCRATCHDIR
@@ -11,6 +11,7 @@ mamba activate /storage/brno2/home/miapp/.conda/envs/sadenv
 ls -R $SCRATCHDIR > $DATADIR/debugprint
 cd $SCRATCHDIR
 echo "cuda?:"
+module add cuda/
 nvidia-smi
 echo $CUDA_VISIBLE_DEVICES
 echo "-cuda-"

@@ -8,7 +8,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 
 
-debug = False
+debug = True
 
 
 parser = argparse.ArgumentParser()
@@ -37,6 +37,20 @@ print("CUDA available:", torch.cuda.is_available())
 print("CUDA device count:", torch.cuda.device_count())
 print("CUDA current device:", torch.cuda.current_device())
 print("CUDA device name:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "No GPU detected")
+
+print("PyTorch version:", torch.__version__)
+print("CUDA version compiled with PyTorch:", torch.version.cuda)
+print("CUDA runtime version:", torch._C._cuda_getDriverVersion() if torch.cuda.is_available() else "No CUDA runtime available")
+
+print("CUDA_HOME:", os.environ.get("CUDA_HOME"))
+print("LD_LIBRARY_PATH:", os.environ.get("LD_LIBRARY_PATH"))
+print("PATH:", os.environ.get("PATH"))
+
+try:
+    x = torch.rand(3, 3).to("cuda")
+    print("Tensor on CUDA:", x)
+except Exception as e:
+    print("Failed to move tensor to CUDA. Error:", e)
 
 class SADDataset(Dataset):
     def __init__(self, X, Y, min_len=None):
