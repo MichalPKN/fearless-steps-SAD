@@ -3,12 +3,13 @@ import model
 import numpy as np
 import os
 import argparse
+import time
 
 import torch
 from torch.utils.data import Dataset, DataLoader
 
-
-debug = True
+start_time = time.time()
+debug = False
 
 
 parser = argparse.ArgumentParser()
@@ -91,6 +92,9 @@ epochs = 2 if debug else 10
 criterion = torch.nn.BCELoss()  # Binary Cross-Entropy for binary output
 optimizer = torch.optim.Adam(sad_model.parameters(), lr=0.001)
 
+load_time = time.time() - start_time
+print(f"Data loaded in {load_time:.2f} seconds")
+
 print("training model")
 sad_model.train()
 for epoch in range(epochs):
@@ -112,5 +116,7 @@ for epoch in range(epochs):
     
     print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/len(dataloader):.4f}")
 print("finished training model")
+training_time = time.time() - start_time - load_time
+print(f"Training completed in {training_time:.2f} seconds")
 #print("last batch: ", output.shape, "mean: ", output.mean())
 
