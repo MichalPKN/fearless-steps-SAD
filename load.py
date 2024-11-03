@@ -38,6 +38,8 @@ class LoadAudio:
             print(f"Loaded {len(labels)} labels")
             
         if labels:
+            # for i in range(len(labels)):
+            #     print(f"audio length: {len(X[i])}, labels length: {len(labels[i])}")
             return X, audio_info_list, labels
         return X, audio_info_list
 
@@ -45,7 +47,6 @@ class LoadAudio:
         audio_data, sr = librosa.load(file_path, sr=None)
         frame_size = int(self.frame_length * sr)
         mfcc = librosa.feature.mfcc(y=audio_data, sr=sr, n_mfcc=self.n_mfcc, hop_length=frame_size)
-        #mfcc = librosa.feature.mfcc(y=audio_data, sr=sr, n_mfcc=self.n_mfcc)
         return mfcc.T
     
     
