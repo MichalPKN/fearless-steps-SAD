@@ -58,7 +58,7 @@ except Exception as e:
 input_size = 40
 hidden_size = [64, 32, 16] if debug else [1024, 512, 256]
 epochs = 2 if debug else 20
-batch_size = 5
+batch_size = 2
 criteria = 0.5
 learning_rate = 0.001
 frame_length = 0.01
@@ -153,7 +153,7 @@ for epoch in range(epochs):
     pfp = fp_time / y_nonspeech_time # false alarm
     pfn = fn_time / y_speech_time # miss
     dcf = 0.75 * pfn + 0.25 * pfp
-    print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/len(dataloader):.4f}, Accuracy: {train_accuracy*100:.2f}, DCF: {dcf*100:.2}")
+    print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/len(dataloader):.4f}, Accuracy: {train_accuracy*100:.2f}, DCF: {dcf*100:.2f}")
     
     # eval
     sad_model.eval()    
@@ -180,6 +180,8 @@ for epoch in range(epochs):
     dev_dcf = 0.75 * pfn + 0.25 * pfp
     
     print(f'Validation Accuracy: {dev_accuracy*100:.2f}, Validation DCF: {dev_dcf*100:.4f}')
+    
+    torch.cuda.empty_cache()
     
 print("finished training model")
 training_time = time.time() - start_time - load_time

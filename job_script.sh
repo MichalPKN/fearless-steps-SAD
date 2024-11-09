@@ -14,6 +14,7 @@ echo "cuda?:"
 module add cuda/
 nvidia-smi
 echo $CUDA_VISIBLE_DEVICES
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 echo "-cuda-"
 python3 __init__.py --datadir $SCRATCHDIR| tee -a $DATADIR/print_outputs.log
 cp -R outs $DATADIR/outs/$JOID
