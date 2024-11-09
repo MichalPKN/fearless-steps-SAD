@@ -66,11 +66,11 @@ frame_length = 0.01
 
 
 class SADDataset(Dataset):
-    def __init__(self, X, Y, min_len=None):
+    def __init__(self, X, Y, max_len=None):
         self.X = X  # List of feature matrices
         self.Y = Y  # List of labels (0/1)
         #self.min_len = min_len or min([len(x) for x in X])
-        self.max_len = max([len(x) for x in X])
+        self.max_len = max_len or max([len(x) for x in X])
 
     def __len__(self):
         return len(self.X)
@@ -79,8 +79,11 @@ class SADDataset(Dataset):
         x = torch.tensor(self.X[idx], dtype=torch.float32)
         y = torch.tensor(self.Y[idx], dtype=torch.float32)
         x_padded = F.pad(x, (0, 0, 0, self.max_len - len(x)))
-        y_padded = F.pad(y, (0, self.max_len - len(y)))
-        return x_padded, y_padded
+        y_padded = F.pad(y, (0, 0, 0, self.max_len - len(y)))
+        
+        mask = torch.zeros_like(y_padded)
+        mask[:len(x)] = 1
+        return x_padded, y_padded, mask
         # x_cut = x[:self.min_len]
         # y_cut = y[:self.min_len]
         # return x_cut, y_cut
@@ -94,7 +97,7 @@ dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
 # dev data
 X_dev, _, Y_dev = data_loader.load_all(dev_path, dev_labels)
-dataset_dev = SADDataset(X_dev, Y_dev)
+dataset_dev = SADDataset(X_dev, Y_dev, max_len=dataset.max_len)
 dataloader_dev = DataLoader(dataset_dev, batch_size=batch_size, shuffle=True)
 
 
@@ -118,8 +121,9 @@ for epoch in range(epochs):
     fn_time = 0
     y_speech_time = 0
     y_nonspeech_time = 0
-    for batch_x, batch_y in dataloader:
-        batch_x, batch_y = batch_x.to(device), batch_y.to(device)
+    for batch_x, batch_y, mask in dataloader:
+        #print("batch_x: ", batch_x.shape, "batch_y: ", batch_y.shape, "mask: ", mask.shape)
+        batch_x, batch_y, mask = batch_x.to(device), batch_y.to(device), mask.to(device)
         
         optimizer.zero_grad()
         
@@ -127,25 +131,28 @@ for epoch in range(epochs):
         outputs = sad_model(batch_x)
         loss = criterion(outputs, batch_y)
         
-        #acc = ((outputs>=criteria) == batch_y).sum().item() / batch_y.shape[1]
         preds = (outputs >= criteria).float()
-        correct_predictions += (preds == batch_y).sum().item()
-        total_predictions += batch_y.numel()
+        correct_predictions += ((preds == batch_y) * mask).sum().item()
+        total_predictions += mask.sum().item()
         
+        #print("predsum: ", preds.sum(), "batch_y sum: ", batch_y.sum())
+        
+        #print(preds.shape)
         # Backward
         loss.backward()
         optimizer.step()
+        fp_time += (((preds == 1) & (batch_y == 0)) * mask).sum().item()
+        fn_time += (((preds == 0) & (batch_y == 1)) * mask).sum().item()
+        y_speech_time += (batch_y * mask).sum().item()
+        y_nonspeech_time += ((batch_y == 0) * mask).sum().item()
         
-        fp_time += ((preds == 1) & (batch_y == 0)).sum().item()
-        fn_time += ((preds == 0) & (batch_y == 1)).sum().item()
-        y_speech_time += batch_y.sum().item()
-        y_nonspeech_time += batch_y.numel() - batch_y.sum().item()
-        
+        #print(fp_time, fn_time, y_speech_time, y_nonspeech_time)
         running_loss += loss.item()
     train_accuracy = correct_predictions / total_predictions
     pfp = fp_time / y_nonspeech_time # false alarm
     pfn = fn_time / y_speech_time # miss
     dcf = 0.75 * pfn + 0.25 * pfp
+    print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/len(dataloader):.4f}, Accuracy: {train_accuracy:.4f}, DCF: {dcf*10:.2}")
     
     # eval
     sad_model.eval()    
@@ -156,23 +163,22 @@ for epoch in range(epochs):
     y_speech_time = 0
     y_nonspeech_time = 0
     with torch.no_grad():
-        for batch_x, batch_y in dataloader_dev:
-            batch_x, batch_y = batch_x.to(device), batch_y.to(device)
+        for batch_x, batch_y, mask in dataloader_dev:
+            batch_x, batch_y, mask = batch_x.to(device), batch_y.to(device), mask.to(device)
             outputs = sad_model(batch_x)
             preds = (outputs >= criteria).float()
-            correct_predictions += (preds == batch_y).sum().item()
-            total_predictions += batch_y.numel()
-            fp_time += ((preds == 1) & (batch_y == 0)).sum().item()
-            fn_time += ((preds == 0) & (batch_y == 1)).sum().item()
-            y_speech_time += batch_y.sum().item()
-            y_nonspeech_time += batch_y.numel() - batch_y.sum().item()
+            correct_predictions += (preds == batch_y * mask).sum().item()
+            total_predictions += mask.sum().item()
+            fp_time += (((preds == 1) & (batch_y == 0)) * mask).sum().item()
+            fn_time += (((preds == 0) & (batch_y == 1)) * mask).sum().item()
+            y_speech_time += (batch_y * mask).sum().item()
+            y_nonspeech_time += ((batch_y == 0) * mask).sum().item()
     dev_accuracy = correct_predictions / total_predictions
     pfp = fp_time / y_nonspeech_time # false alarm
     pfn = fn_time / y_speech_time # miss
     dev_dcf = 0.75 * pfn + 0.25 * pfp
     
-    print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/len(dataloader):.4f}, Accuracy: {train_accuracy:.4f}, DCF: {dcf:.4f}")
-    print(f'Validation Accuracy: {dev_accuracy:.4f}, Validation DCF: {dev_dcf:.4f}')
+    print(f'Validation Accuracy: {dev_accuracy:.4f}, Validation DCF: {dev_dcf*10:.4f}')
     
 print("finished training model")
 training_time = time.time() - start_time - load_time
