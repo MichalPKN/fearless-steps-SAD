@@ -3,13 +3,12 @@ import librosa
 import numpy as np
 
 class LoadAudio:
-    def __init__(self, n_mfcc=40, frame_length=0.01, debug=False):
-        self.n_mfcc = n_mfcc
+    def __init__(self, input_size=40, frame_length=0.01, debug=False):
+        self.input_size = input_size
         self.frame_length = frame_length
         self.debug = debug
 
     def load_all(self, audio_dir, labels_path=None):
-        # Check if audio directory exists
         if not os.path.exists(audio_dir):
             raise ValueError(f"Audio directory {audio_dir} does not exist.")
         
@@ -21,10 +20,10 @@ class LoadAudio:
             if filename.endswith(".wav"):
                 file_path = os.path.join(audio_dir, filename)
                 features = self.extract_features(file_path)
-                audio_info = self.extract_audio_info(file_path)
+                #audio_info = self.extract_audio_info(file_path)
                 if features is not None:
                     X.append(features)
-                    audio_info_list.append(audio_info)
+                    #audio_info_list.append(audio_info)
             if self.debug and i >= 1:
                 break
         print(f"Loaded {len(X)} audio files")
@@ -40,13 +39,13 @@ class LoadAudio:
         if labels:
             # for i in range(len(labels)):
             #     print(f"audio length: {len(X[i])}, labels length: {len(labels[i])}")
-            return X, audio_info_list, labels
-        return X, audio_info_list
+            return X, None, labels
+        return X, None, None
 
     def extract_features(self, file_path):
         audio_data, sr = librosa.load(file_path, sr=None)
         frame_size = int(self.frame_length * sr)
-        mfcc = librosa.feature.mfcc(y=audio_data, sr=sr, n_mfcc=self.n_mfcc, hop_length=frame_size)
+        mfcc = librosa.feature.mfcc(y=audio_data, sr=sr, n_mfcc=self.input_size, hop_length=frame_size)
         return mfcc.T
     
     
@@ -76,14 +75,14 @@ class LoadAudio:
             print(f"Error processing {file_path}: {e}")
             return None
         
-    def add_labels(self, labels_path, mfcc):
+    def add_labels(self, labels_path, features):
         if not os.path.exists(labels_path):
             raise ValueError(f"Labels file {labels_path} does not exist.")
         
         with open(labels_path, "r") as f:
             label_file = f.readlines()
         
-        labels = np.zeros((mfcc.shape[0], 1))
+        labels = np.zeros((features.shape[0], 1))
         for line in label_file:
             line_data = line.split()
             start_time = line_data[2]
