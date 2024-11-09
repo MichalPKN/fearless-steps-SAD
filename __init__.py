@@ -98,7 +98,7 @@ dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 # dev data
 X_dev, _, Y_dev = data_loader.load_all(dev_path, dev_labels)
 dataset_dev = SADDataset(X_dev, Y_dev, max_len=dataset.max_len)
-dataloader_dev = DataLoader(dataset_dev, batch_size=batch_size, shuffle=True)
+dataloader_dev = DataLoader(dataset_dev, batch_size=batch_size, shuffle=False)
 
 
 # model
@@ -111,8 +111,9 @@ load_time = time.time() - start_time
 print(f"Data loaded in {load_time:.2f} seconds")
 
 print("training model")
-sad_model.train()
 for epoch in range(epochs):
+    # train
+    sad_model.train()
     accuracies = []
     running_loss = 0.0
     correct_predictions = 0
@@ -132,7 +133,7 @@ for epoch in range(epochs):
         loss = criterion(outputs, batch_y)
         
         preds = (outputs >= criteria).float()
-        correct_predictions += ((preds == batch_y) * mask).sum().item()
+        correct_predictions += ((preds == batch_y).float() * mask).sum().item()
         total_predictions += mask.sum().item()
         
         #print("predsum: ", preds.sum(), "batch_y sum: ", batch_y.sum())
@@ -152,7 +153,7 @@ for epoch in range(epochs):
     pfp = fp_time / y_nonspeech_time # false alarm
     pfn = fn_time / y_speech_time # miss
     dcf = 0.75 * pfn + 0.25 * pfp
-    print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/len(dataloader):.4f}, Accuracy: {train_accuracy:.4f}, DCF: {dcf*10:.2}")
+    print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/len(dataloader):.4f}, Accuracy: {train_accuracy*100:.2f}, DCF: {dcf*100:.2}")
     
     # eval
     sad_model.eval()    
@@ -164,10 +165,10 @@ for epoch in range(epochs):
     y_nonspeech_time = 0
     with torch.no_grad():
         for batch_x, batch_y, mask in dataloader_dev:
-            batch_x, batch_y, mask = batch_x.to(device), batch_y.to(device), mask.to(device)
+            batch_x, batch_y, mask = batch_x.to(device), batch_y.to(device),    mask.to(device)
             outputs = sad_model(batch_x)
             preds = (outputs >= criteria).float()
-            correct_predictions += (preds == batch_y * mask).sum().item()
+            correct_predictions += ((preds == batch_y).float() * mask).sum().item()
             total_predictions += mask.sum().item()
             fp_time += (((preds == 1) & (batch_y == 0)) * mask).sum().item()
             fn_time += (((preds == 0) & (batch_y == 1)) * mask).sum().item()
@@ -178,7 +179,7 @@ for epoch in range(epochs):
     pfn = fn_time / y_speech_time # miss
     dev_dcf = 0.75 * pfn + 0.25 * pfp
     
-    print(f'Validation Accuracy: {dev_accuracy:.4f}, Validation DCF: {dev_dcf*10:.4f}')
+    print(f'Validation Accuracy: {dev_accuracy*100:.2f}, Validation DCF: {dev_dcf*100:.4f}')
     
 print("finished training model")
 training_time = time.time() - start_time - load_time
