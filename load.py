@@ -13,7 +13,7 @@ class LoadAudio:
             raise ValueError(f"Audio directory {audio_dir} does not exist.")
         
         labels = []
-        audio_info_list = []
+        audio_info = [0, 0, 0]
         X = []
         print(f"Loading audio from {audio_dir}")
         for i, filename in enumerate(os.listdir(audio_dir)):
@@ -31,15 +31,23 @@ class LoadAudio:
             print(f"Loading labels from {labels_path}")
             for i, filename in enumerate(os.listdir(labels_path)):
                 label_path = os.path.join(labels_path, filename)
-                labels.append(self.add_labels(label_path, X[i]))
+                labels_f, num_of_1s, num_of_0s = self.add_labels(label_path, X[i])
+                audio_info[0] += num_of_1s
+                audio_info[1] += num_of_0s
+                audio_info[2] += len(labels_f)
+                if num_of_0s + num_of_1s != len(labels_f):
+                    print(f"Error: num_of_0s + num_of_1s != len(labels_f) for {label_path}")
+                    print(f"num_of_0s: {num_of_0s}, num_of_1s: {num_of_1s}, len(labels_f): {len(labels_f)}")
+                labels.append(labels_f)
                 if self.debug and i >= 1:
                     break
             print(f"Loaded {len(labels)} labels")
+            print(labels[0].shape)
             
         if labels:
             # for i in range(len(labels)):
             #     print(f"audio length: {len(X[i])}, labels length: {len(labels[i])}")
-            return X, None, labels
+            return X, audio_info, labels
         return X, None, None
 
     def extract_features(self, file_path):
@@ -83,6 +91,8 @@ class LoadAudio:
             label_file = f.readlines()
         
         labels = np.zeros((features.shape[0], 1))
+        num_of_1s = 0
+        num_of_0s = 0
         for line in label_file:
             line_data = line.split()
             start_time = line_data[2]
@@ -91,8 +101,21 @@ class LoadAudio:
             start = int(float(start_time) / self.frame_length)
             end = int(float(end_time) / self.frame_length)
             labels[start:end, 0] = int(label)
-        
-        return labels
+            if label == 1:
+                num_of_1s += end - start
+            else:
+                num_of_0s += end - start
+        print(labels.shape)
+        labels[end:, 0] = label
+        if label == 1:
+            num_of_1s += len(labels) - end
+        else:
+            num_of_0s += len(labels) - end
+        print(labels.shape)
+        # print(end, start, end-start, labels.shape[0])
+        # print(np.count_nonzero(labels), num_of_1s)
+        # print(np.count_nonzero(labels == 0), num_of_0s)
+        return labels, num_of_1s, num_of_0s
 
 if __name__ == "__main__":
     audio_dir = "FSC_P4_Streams\Audio\Streams\Dev"

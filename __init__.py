@@ -57,7 +57,7 @@ except Exception as e:
 
 test_num = 1
 for batch_size in [1, 2, 5]:
-    for learning_rate in [0.01, 0.001, 0.0001]:
+    for learning_rate in [0.001, 0.0001]:
         for input_size in [13, 40]:
             print(f"\n\nbatch_size: {batch_size}, learning_rate: {learning_rate}, input_size: {input_size}")
 
@@ -98,7 +98,7 @@ for batch_size in [1, 2, 5]:
             data_loader = load.LoadAudio(debug=debug, input_size=input_size, frame_length=frame_length)
 
             # train data
-            X, _, Y = data_loader.load_all(train_path, train_labels)
+            X, audio_info, Y = data_loader.load_all(train_path, train_labels)
             dataset = SADDataset(X, Y)
             dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False) # maybe shuffle True
 
@@ -110,7 +110,11 @@ for batch_size in [1, 2, 5]:
 
             # model
             sad_model = model.SADModel(input_size, hidden_size).to(device)
-            criterion = torch.nn.BCELoss() # maybe add weight
+            # weight
+            one_ratio = audio_info[0] / audio_info[2]
+            zero_ratio = audio_info[1] / audio_info[2]
+            criterion = torch.nn.BCELoss()
+            
             optimizer = torch.optim.Adam(sad_model.parameters(), lr=learning_rate)
 
             # training
