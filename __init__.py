@@ -115,7 +115,6 @@ for batch_size in [1]:
                 y_nonspeech_time = 0
                 for i in range(len(X)):
                     batch_x, batch_y = torch.tensor(X[i], dtype=torch.float32), torch.tensor(Y[i], dtype=torch.float32)
-                    print("batch_x: ", batch_x.shape, "batch_y: ", batch_y.shape)
                     batch_x, batch_y = batch_x.to(device), batch_y.to(device)
                     
                     optimizer.zero_grad()
