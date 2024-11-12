@@ -9,12 +9,13 @@ class SADModel(nn.Module):
         self.fc2 = nn.Linear(hidden_size[0], hidden_size[1])
         self.fc3 = nn.Linear(hidden_size[1], hidden_size[2])
         self.fc4 = nn.Linear(hidden_size[2], 1) 
+        self.relu = nn.ReLU()
         self.sigmoid = nn.Sigmoid() 
     
     def forward(self, x):
         #out, _ = self.lstm(x)
-        x = torch.relu(self.fc1(x))
-        x = torch.relu(self.fc2(x))
-        x = torch.relu(self.fc3(x))
+        x = self.relu(self.fc1(x))
+        x = self.relu(self.fc2(x))
+        x = self.relu(self.fc3(x))
         out = self.sigmoid(self.fc4(x))
         return out
