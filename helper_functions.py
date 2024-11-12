@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 from torch.nn import functional as F
+import os
 
 
 def plot_result(y_actual, y_pred, processed_predictions=None, path="", file_name="sad_prediction_comparison.png", debug=False):    
@@ -31,7 +32,7 @@ def plot_result(y_actual, y_pred, processed_predictions=None, path="", file_name
 
     plt.suptitle("SAD Model Prediction vs Ground Truth (Zoomed in)")
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-    plt.savefig(path + file_name)
+    plt.savefig(os.path.join(path, file_name))
     if debug:
         plt.show()
 
