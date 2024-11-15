@@ -7,9 +7,9 @@ from torch.nn import functional as F
 import os
 
 
-def plot_result(y_actual, y_pred, processed_predictions=None, path="", file_name="sad_prediction_comparison.png", debug=False):    
+def plot_result(y_actual, y_pred, processed_predictions=None, audio_stream=None, path="", file_name="sad_prediction_comparison.png", debug=False):    
     # Plotting in subplots
-    fig, axs = plt.subplots(3, 1, figsize=(15, 10), sharex=True)
+    fig, axs = plt.subplots(3, 1, figsize=(15, 10))
 
     # Plot the actual labels
     axs[0].plot(y_actual, label="Actual", color="green")
@@ -24,11 +24,16 @@ def plot_result(y_actual, y_pred, processed_predictions=None, path="", file_name
     axs[1].legend(loc="upper right")
 
     # Plot the difference (absolute error)
-    difference = np.abs(y_actual - y_pred)
-    axs[2].plot(difference, label="Absolute Difference", color="purple")
-    axs[2].set_ylabel("Difference")
-    axs[2].set_xlabel("Time Steps")
-    axs[2].legend(loc="upper right")
+    # difference = np.abs(y_actual - y_pred)
+    # axs[2].plot(difference, label="Absolute Difference", color="purple")
+    # axs[2].set_ylabel("Difference")
+    # axs[2].set_xlabel("Time Steps")
+    # axs[2].legend(loc="upper right")
+    if audio_stream is not None:
+        axs[2].hist(audio_stream, bins=100, color='skyblue', edgecolor='black')
+        axs[2].set_ylabel("Frequency")
+        axs[2].set_xlabel("Value")
+        axs[2].set_title("Histogram of Predictions")
 
     plt.suptitle("SAD Model Prediction vs Ground Truth (Zoomed in)")
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
