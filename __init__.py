@@ -5,7 +5,7 @@ import numpy as np
 import os
 import argparse
 import time
-from helper_functions import plot_result, SADDataset
+from helper_functions import plot_result, SADDataset, split_file
 
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -44,26 +44,27 @@ criteria = 0.5
 # learning_rate = 0.001
 frame_length = 0.01
 #num_layers = 3 
+shuffle_batches = True
+
+data_loader = load.LoadAudio(debug=debug, input_size=input_size, frame_length=frame_length)
+
+# train data
+X, audio_info, Y = data_loader.load_all(train_path, train_labels)
+dataset = SADDataset(X, Y)
+#dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False) # maybe shuffle True
+
+# dev data
+X_dev, dev_info, Y_dev = data_loader.load_all(dev_path, dev_labels)
+dataset_dev = SADDataset(X_dev, Y_dev, max_len=dataset.max_len)
+#dataloader_dev = DataLoader(dataset_dev, batch_size=batch_size, shuffle=False)
 
 test_num = 1
 for batch_size in [10000, 100]:
+    X, Y = split_file(X, Y, batch_size=batch_size, shuffle=shuffle_batches)
+    X_dev, Y_dev = split_file(X_dev, Y_dev, batch_size=batch_size)
     for learning_rate in [0.001, 0.0001]:
         for hidden_size in [[128, 64], [1024, 512]]:
-            
-            print(f"\n\nbatch_size: {batch_size}, learning_rate: {learning_rate}, input_size: {input_size}")
-            
-            data_loader = load.LoadAudio(debug=debug, input_size=input_size, frame_length=frame_length)
-
-            # train data
-            X, audio_info, Y = data_loader.load_all(train_path, train_labels)
-            dataset = SADDataset(X, Y)
-            #dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False) # maybe shuffle True
-
-            # dev data
-            X_dev, dev_info, Y_dev = data_loader.load_all(dev_path, dev_labels)
-            dataset_dev = SADDataset(X_dev, Y_dev, max_len=dataset.max_len)
-            #dataloader_dev = DataLoader(dataset_dev, batch_size=batch_size, shuffle=False)
-
+            print(f"\n\nbatch_size: {batch_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
 
             # model
             sad_model = model2l.SADModel(input_size, hidden_size).to(device)
@@ -95,47 +96,46 @@ for batch_size in [10000, 100]:
                 y_speech_time = 0
                 y_nonspeech_time = 0
                 for i in range(len(X)):
-                    file_x, file_y = torch.tensor(X[i], dtype=torch.float32), torch.tensor(Y[i], dtype=torch.float32)
-                    for j in range(0, len(file_x), batch_size):
-                        batch_x = file_x[j:j+batch_size]
-                        batch_y = file_y[j:j+batch_size]
-                        batch_x, batch_y = batch_x.to(device), batch_y.to(device)
-                        
-                        optimizer.zero_grad()
-                        
-                        # Forward
-                        outputs = sad_model(batch_x)
-                        #print(outputs.mean())
-                        loss = criterion(outputs, batch_y)
-                        outputs = torch.sigmoid(outputs)
-                        
-                        preds = (outputs >= criteria).float()
-                        correct_predictions += ((preds == batch_y).float()).sum().item()
-                        total_predictions += len(batch_y)
-                        
-                        # plot_result(batch_y[0].cpu().numpy(), preds[0].cpu().numpy(), outputs[0].cpu().detach().numpy(), path=datadir_path, file_name="sad_prediction_comparison" + str(i) + ".png", debug=False)
-                        # i += 1
-                        
-                        #print("predsum: ", preds.sum(), "batch_y sum: ", batch_y.sum())
-                        
-                        #print(preds.shape)
-                        # Backward
-                        loss.backward()
-                        optimizer.step()
-                        fp_time += ((preds == 1) & (batch_y == 0)).sum().item()
-                        fn_time += ((preds == 0) & (batch_y == 1)).sum().item()
-                        y_speech_time += (batch_y).sum().item()
-                        y_nonspeech_time += ((batch_y == 0)).sum().item()
-                        
-                        #print(fp_time, fn_time, y_speech_time, y_nonspeech_time)
-                        running_loss += loss.item()
-                        if epoch == 0 and j == 100000:
-                            train_accuracy = correct_predictions / total_predictions
-                            pfp = fp_time / y_nonspeech_time # false alarm
-                            pfn = fn_time / y_speech_time # miss
-                            dcf = 0.75 * pfn + 0.25 * pfp
-                            print(f'first epoch, Loss: {running_loss/len(X):.4f}, Accuracy: {train_accuracy*100:.2f}, DCF: {dcf*100:.2f}')
-                            print("fp_time:", preds.sum(), "ones actual:", batch_y.sum(), "mean:", outputs.mean())
+                    batch_x, batch_y = torch.tensor(X[i], dtype=torch.float32), torch.tensor(Y[i], dtype=torch.float32)
+                    batch_x, batch_y = batch_x.to(device), batch_y.to(device)
+                    
+                    
+                    optimizer.zero_grad()
+                    
+                    # Forward
+                    outputs = sad_model(batch_x)
+                    #print(outputs.mean())
+                    loss = criterion(outputs, batch_y)
+                    outputs = torch.sigmoid(outputs)
+                    
+                    preds = (outputs >= criteria).float()
+                    correct_predictions += ((preds == batch_y).float()).sum().item()
+                    total_predictions += len(batch_y)
+                    
+                    # plot_result(batch_y[0].cpu().numpy(), preds[0].cpu().numpy(), outputs[0].cpu().detach().numpy(), path=datadir_path, file_name="sad_prediction_comparison" + str(i) + ".png", debug=False)
+                    # i += 1
+                    
+                    #print("predsum: ", preds.sum(), "batch_y sum: ", batch_y.sum())
+                    
+                    #print(preds.shape)
+                    # Backward
+                    loss.backward()
+                    optimizer.step()
+                    fp_time += ((preds == 1) & (batch_y == 0)).sum().item()
+                    fn_time += ((preds == 0) & (batch_y == 1)).sum().item()
+                    y_speech_time += (batch_y).sum().item()
+                    y_nonspeech_time += ((batch_y == 0)).sum().item()
+                    
+                    #print(fp_time, fn_time, y_speech_time, y_nonspeech_time)
+                    running_loss += loss.item()
+                    if epoch == 0 and i % (len(X) // 20) == 0:
+                        train_accuracy = correct_predictions / total_predictions
+                        pfp = fp_time / (y_nonspeech_time + 0.0001) # false alarm
+                        pfn = fn_time / (y_speech_time + 0.0001) # miss
+                        dcf = 0.75 * pfn + 0.25 * pfp
+                        print(f'first epoch, Loss: {running_loss/len(X):.4f}, Accuracy: {train_accuracy*100:.2f}, DCF: {dcf*100:.2f}')
+                        print("size:", len(preds), "fp_time:", preds.sum(), "ones actual:", batch_y.sum(), "mean:", outputs.mean())
+                        print("-----------------------------")
                 train_accuracy = correct_predictions / total_predictions
                 pfp = fp_time / y_nonspeech_time # false alarm
                 pfn = fn_time / y_speech_time # miss
@@ -152,24 +152,21 @@ for batch_size in [10000, 100]:
                     y_speech_time = 0
                     y_nonspeech_time = 0
                     for i in range(len(X_dev)):
-                        file_x, file_y = torch.tensor(X_dev[i], dtype=torch.float32), torch.tensor(Y_dev[i], dtype=torch.float32)
-                        for j in range(0, len(file_x), batch_size):
-                            batch_x = file_x[j:j+batch_size]
-                            batch_y = file_y[j:j+batch_size]
-                            batch_x, batch_y = batch_x.to(device), batch_y.to(device)
-                            outputs = sad_model(batch_x)
-                            outputs = torch.sigmoid(outputs)
-                            preds = (outputs >= criteria).float()
-                            correct_predictions += ((preds == batch_y).float()).sum().item()
-                            total_predictions += len(batch_y)
-                            fp_time += ((preds == 1) & (batch_y == 0)).sum().item()
-                            fn_time += ((preds == 0) & (batch_y == 1)).sum().item()
-                            y_speech_time += (batch_y).sum().item()
-                            y_nonspeech_time += ((batch_y == 0)).sum().item()
-                            if j == 100000:
-                                toshow_y = batch_y
-                                toshow_preds = preds
-                                toshow_outputs = outputs
+                        batch_x, batch_y = torch.tensor(X_dev[i], dtype=torch.float32), torch.tensor(Y_dev[i], dtype=torch.float32)
+                        batch_x, batch_y = batch_x.to(device), batch_y.to(device)
+                        outputs = sad_model(batch_x)
+                        outputs = torch.sigmoid(outputs)
+                        preds = (outputs >= criteria).float()
+                        correct_predictions += ((preds == batch_y).float()).sum().item()
+                        total_predictions += len(batch_y)
+                        fp_time += ((preds == 1) & (batch_y == 0)).sum().item()
+                        fn_time += ((preds == 0) & (batch_y == 1)).sum().item()
+                        y_speech_time += (batch_y).sum().item()
+                        y_nonspeech_time += ((batch_y == 0)).sum().item()
+                        if i == 100 or (debug and i == 20):
+                            toshow_y = batch_y
+                            toshow_preds = preds
+                            toshow_outputs = outputs
                     # for batch_x, batch_y, mask in dataloader_dev:
                     #     batch_x, batch_y, mask = batch_x.to(device), batch_y.to(device),    mask.to(device)
                     #     outputs = sad_model(batch_x)
@@ -185,7 +182,7 @@ for batch_size in [10000, 100]:
                     pfn = fn_time / y_speech_time # miss
                     dev_dcf = 0.75 * pfn + 0.25 * pfp
                     
-                    audio_stream = dev_info[3][i]
+                    audio_stream = dev_info[3][0]
                     print(len(audio_stream))
                 
                     print(f'Validation Accuracy: {dev_accuracy*100:.2f}, Validation DCF: {dev_dcf*100:.4f}')

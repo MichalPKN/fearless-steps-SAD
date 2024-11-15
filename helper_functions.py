@@ -1,5 +1,5 @@
 #import plotly.graph_objects as go
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt # type: ignore
 import numpy as np
 import torch
 from torch.utils.data import Dataset
@@ -64,6 +64,29 @@ class SADDataset(Dataset):
         # y_cut = y[:self.min_len]
         # return x_cut, y_cut
 
+def split_file(X, y, batch_size=10000, shuffle=False):
+    X_batches = []
+    y_batches = []
+    for j in range(len(X)):
+        for i in range(0, len(X[j]), batch_size):
+            X_batches.append(X[j][i:i + batch_size])
+            y_batches.append(y[j][i:i + batch_size])
+        
+        # remainder batch
+        if (len(X[j])-1) % batch_size != 0 and len(X[j]) % batch_size != 0:
+            X_batches.append(X[j][len(X[j]) - len(X[j]) % batch_size:])
+            y_batches.append(y[j][len(y[j]) - len(y[j]) % batch_size:])
+            print("Remainder batch added of length: ", len(X[j]) % batch_size)
+            
+    if shuffle:
+        zipped = list(zip(X_batches, y_batches))
+        np.random.shuffle(zipped)
+        X_batches, y_batches = zip(*zipped)
+
+    print("Number of batches: ", len(X_batches))
+    print("y_batches length: ", len(y_batches))
+        
+    return X_batches, y_batches
 
 # def plot_result_plotly(y_actual, y_pred, processed_predictions=None, path="", file_name="sad_prediction_comparison.png", debug=False):    
 #     # Plotting in subplots
