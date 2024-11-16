@@ -3,10 +3,11 @@ import librosa
 import numpy as np
 
 class LoadAudio:
-    def __init__(self, input_size=40, frame_length=0.01, debug=False):
+    def __init__(self, input_size=40, frame_length=0.01, debug=False, norm=True):
         self.input_size = input_size
         self.frame_length = frame_length
         self.debug = debug
+        self.norm = norm
 
     def load_all(self, audio_dir, labels_path=None):
         if not os.path.exists(audio_dir):
@@ -55,6 +56,8 @@ class LoadAudio:
         audio_data, sr = librosa.load(file_path, sr=None)
         frame_size = int(self.frame_length * sr)
         mfcc = librosa.feature.mfcc(y=audio_data, sr=sr, n_mfcc=self.input_size, hop_length=frame_size)
+        if self.norm:
+            mfcc = librosa.util.normalize(mfcc)
         return mfcc.T
     
     

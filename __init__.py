@@ -59,13 +59,13 @@ dataset_dev = SADDataset(X_dev, Y_dev, max_len=dataset.max_len)
 #dataloader_dev = DataLoader(dataset_dev, batch_size=batch_size, shuffle=False)
 
 test_num = 1
-for batch_size in [10000, 100]:
+for batch_size in [1000, 100, 30]:
     X, Y = split_file(X, Y, batch_size=batch_size, shuffle=shuffle_batches)
-    X_dev, Y_dev = split_file(X_dev, Y_dev, batch_size=batch_size)
-    for learning_rate in [0.001, 0.0001]:
-        for hidden_size in [[128, 64], [1024, 512]]:
+    X_dev, Y_dev = split_file(X_dev, Y_dev, batch_size=50000)
+    for hidden_size in [[1024, 512], [2048, 2048]]:
+        for learning_rate in [0.0001, 0.00001]:
             print(f"\n\nbatch_size: {batch_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
-
+            print(f"X batch size: {len(X)}, X_dev batch size {len(X_dev)}")
             # model
             sad_model = model2l.SADModel(input_size, hidden_size).to(device)
             # weight
@@ -87,7 +87,7 @@ for batch_size in [10000, 100]:
             for epoch in range(epochs):
                 # train
                 sad_model.train()
-                accuracies = []
+                losses = np.zeros(epochs)
                 running_loss = 0.0
                 correct_predictions = 0
                 total_predictions = 0
@@ -112,6 +112,7 @@ for batch_size in [10000, 100]:
                     correct_predictions += ((preds == batch_y).float()).sum().item()
                     total_predictions += len(batch_y)
                     
+                    
                     # plot_result(batch_y[0].cpu().numpy(), preds[0].cpu().numpy(), outputs[0].cpu().detach().numpy(), path=datadir_path, file_name="sad_prediction_comparison" + str(i) + ".png", debug=False)
                     # i += 1
                     
@@ -128,18 +129,22 @@ for batch_size in [10000, 100]:
                     
                     #print(fp_time, fn_time, y_speech_time, y_nonspeech_time)
                     running_loss += loss.item()
+                    if epoch == 0 and (i < 20 or (i > 150 and i < 170)):
+                        print(f"i: {i}, Loss: {running_loss/(i+1):.4f}, running_loss: {running_loss:.4f}")
                     if epoch == 0 and i % (len(X) // 20) == 0:
                         train_accuracy = correct_predictions / total_predictions
                         pfp = fp_time / (y_nonspeech_time + 0.0001) # false alarm
                         pfn = fn_time / (y_speech_time + 0.0001) # miss
                         dcf = 0.75 * pfn + 0.25 * pfp
-                        print(f'first epoch, Loss: {running_loss/len(X):.4f}, Accuracy: {train_accuracy*100:.2f}, DCF: {dcf*100:.2f}')
+                        print(f'first epoch, Loss: {loss:.4f}, Accuracy: {train_accuracy*100:.2f}, DCF: {dcf*100:.2f}')
                         print("size:", len(preds), "fp_time:", preds.sum(), "ones actual:", batch_y.sum(), "mean:", outputs.mean())
                         print("-----------------------------")
                 train_accuracy = correct_predictions / total_predictions
                 pfp = fp_time / y_nonspeech_time # false alarm
                 pfn = fn_time / y_speech_time # miss
                 dcf = 0.75 * pfn + 0.25 * pfp
+                losses[epoch] = running_loss/len(X)
+                print()
                 print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/len(X):.4f}, Accuracy: {train_accuracy*100:.2f}, DCF: {dcf*100:.2f}")
                 
                 # eval
@@ -163,7 +168,7 @@ for batch_size in [10000, 100]:
                         fn_time += ((preds == 0) & (batch_y == 1)).sum().item()
                         y_speech_time += (batch_y).sum().item()
                         y_nonspeech_time += ((batch_y == 0)).sum().item()
-                        if i == 100 or (debug and i == 20):
+                        if i == 0:
                             toshow_y = batch_y
                             toshow_preds = preds
                             toshow_outputs = outputs
@@ -181,9 +186,6 @@ for batch_size in [10000, 100]:
                     pfp = fp_time / y_nonspeech_time # false alarm
                     pfn = fn_time / y_speech_time # miss
                     dev_dcf = 0.75 * pfn + 0.25 * pfp
-                    
-                    audio_stream = dev_info[3][0]
-                    print(len(audio_stream))
                 
                     print(f'Validation Accuracy: {dev_accuracy*100:.2f}, Validation DCF: {dev_dcf*100:.4f}')
                     print("ones pred:", preds.sum(), "ones actual:", batch_y.sum(), "mean:", outputs.mean())
@@ -192,10 +194,16 @@ for batch_size in [10000, 100]:
                 
             print("finished training model")
             training_time = time.time() - start_time - load_time
-            print(f"Training completed in {training_time:.2f} seconds")
+            print(f"Training completed in {training_time:.2f} seconds, {training_time/60:.2f} minutes")
 
-            path = os.path.join(datadir_path, "plots")
-            plot_result(toshow_y.cpu().numpy(), toshow_preds.cpu().numpy(), toshow_outputs.cpu().detach().numpy(), audio_stream, path=path, file_name="sad_prediction_comparison_hp_" + str(test_num) + ".png", debug=False)
+            if debug:
+                path = os.path.join(datadir_path, "plots")
+            else:
+                path = "/storage/brno2/home/miapp/fearless-steps-SAD/fearless-steps-SAD/plots"
+            
+            plot_result(toshow_y.cpu().numpy(), toshow_preds.cpu().numpy(), toshow_outputs.cpu().detach().numpy(), losses, \
+                        path=path, file_name="sad_prediction_comparison_hp_" + str(test_num) + ".png", debug=False, \
+                        title=f"batch_size: {batch_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
             test_num += 1
             
 print(f"Total time: {time.time() - start_time:.2f} seconds")

@@ -7,7 +7,7 @@ from torch.nn import functional as F
 import os
 
 
-def plot_result(y_actual, y_pred, processed_predictions=None, audio_stream=None, path="", file_name="sad_prediction_comparison.png", debug=False):    
+def plot_result(y_actual, y_pred, processed_predictions=None, additional=None, path="", file_name="sad_prediction_comparison.png", debug=False, title="actual vs predictions"):    
     # Plotting in subplots
     fig, axs = plt.subplots(3, 1, figsize=(15, 10))
 
@@ -29,13 +29,13 @@ def plot_result(y_actual, y_pred, processed_predictions=None, audio_stream=None,
     # axs[2].set_ylabel("Difference")
     # axs[2].set_xlabel("Time Steps")
     # axs[2].legend(loc="upper right")
-    if audio_stream is not None:
-        axs[2].hist(audio_stream, bins=100, color='skyblue', edgecolor='black')
-        axs[2].set_ylabel("Frequency")
-        axs[2].set_xlabel("Value")
-        axs[2].set_title("Histogram of Predictions")
+    if additional is not None: # losses
+        axs[2].plot(additional, label="Loss", color="purple")
+        axs[2].set_ylabel("Loss")
+        axs[2].set_xlabel("Batch Steps")
+        axs[2].legend(loc="upper right")
 
-    plt.suptitle("SAD Model Prediction vs Ground Truth (Zoomed in)")
+    plt.suptitle(title)
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
     plt.savefig(os.path.join(path, file_name))
     if debug:
