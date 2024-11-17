@@ -59,7 +59,10 @@ class LoadAudio:
         frame_size = int(self.frame_length * sr)
         mfcc = librosa.feature.mfcc(y=audio_data, sr=sr, n_mfcc=self.input_size, hop_length=frame_size)
         if self.norm:
-            mfcc = librosa.util.normalize(mfcc)
+            #mfcc = librosa.util.normalize(mfcc)
+            mfcc_mean = np.mean(mfcc, axis=1, keepdims=True)
+            mfcc_std = np.std(mfcc, axis=1, keepdims=True)
+            mfcc = (mfcc - mfcc_mean) / (mfcc_std + 1e-8)
         return mfcc.T
     
     

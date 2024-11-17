@@ -38,7 +38,7 @@ print("CUDA device count:", torch.cuda.device_count())
 # hyperparameters
 input_size = 30
 hidden_size = [64, 32] if debug else [1024, 512]
-epochs = 4 if debug else 8
+epochs = 4 if debug else 15
 # batch_size = 1
 criteria = 0.5
 # learning_rate = 0.001
@@ -58,11 +58,25 @@ X_dev_loded, dev_info, Y_dev_loaded = data_loader.load_all(dev_path, dev_labels)
 dataset_dev = SADDataset(X_dev_loded, Y_dev_loaded, max_len=dataset.max_len)
 #dataloader_dev = DataLoader(dataset_dev, batch_size=batch_size, shuffle=False)
 
+# Debugging utilities
+def check_gradients(asd_model):
+    """Check for exploding/vanishing gradients."""
+    for name, param in asd_model.named_parameters():
+        if param.grad is not None:
+            grad_norm = param.grad.norm().item()
+            print(f"Gradient norm for {name}: {grad_norm:.4f}")
+            if grad_norm > 1e4:  # Threshold for exploding gradients
+                print(f"Warning: Exploding gradient detected in {name}")
+            elif grad_norm < 1e-6:  # Threshold for vanishing gradients
+                print(f"Warning: Vanishing gradient detected in {name}")
+
 test_num = 1
 for batch_size in [1000, 100, 30]:
     X, Y = split_file(X_loaded, Y_loaded, batch_size=batch_size, shuffle=shuffle_batches)
+    X = X[:1000]
+    Y = Y[:1000]
     X_dev, Y_dev = split_file(X_dev_loded, Y_dev_loaded, batch_size=50000)
-    for hidden_size in [[1024, 512]]:
+    for hidden_size in [[1024, 512], [256, 128]]:
         for learning_rate in [0.0001]:
             print(f"\n\nbatch_size: {batch_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
             print(f"X batch size: {len(X)}, X_dev batch size {len(X_dev)}")
@@ -95,7 +109,7 @@ for batch_size in [1000, 100, 30]:
                 fn_time = 0
                 y_speech_time = 0
                 y_nonspeech_time = 0
-                for i in range(1000):   #len(X)):
+                for i in range(len(X)):   #len(X)):
                     batch_x, batch_y = torch.tensor(X[i], dtype=torch.float32), torch.tensor(Y[i], dtype=torch.float32)
                     batch_x, batch_y = batch_x.to(device), batch_y.to(device)
                     
@@ -106,6 +120,10 @@ for batch_size in [1000, 100, 30]:
                     outputs = sad_model(batch_x)
                     #print(outputs.mean())
                     loss = criterion(outputs, batch_y)
+                    
+                    loss.backward()
+                    optimizer.step()
+                    
                     outputs = torch.sigmoid(outputs)
                     
                     preds = (outputs >= criteria).float()
@@ -120,12 +138,15 @@ for batch_size in [1000, 100, 30]:
                     
                     #print(preds.shape)
                     # Backward
-                    loss.backward()
-                    optimizer.step()
+                    
                     fp_time += ((preds == 1) & (batch_y == 0)).sum().item()
                     fn_time += ((preds == 0) & (batch_y == 1)).sum().item()
                     y_speech_time += (batch_y).sum().item()
                     y_nonspeech_time += ((batch_y == 0)).sum().item()
+                    
+                    if epoch % 2 == 0 and i == 0:  # Check gradients for the first batch every 2 epochs
+                        print(f"Epoch {epoch+1}, Batch {i}")
+                        check_gradients(sad_model)
                     
                     #print(fp_time, fn_time, y_speech_time, y_nonspeech_time)
                     running_loss += loss.item()
@@ -195,7 +216,7 @@ for batch_size in [1000, 100, 30]:
             print("finished training model")
             training_time = time.time() - start_time - load_time
             print(f"Training completed in {training_time:.2f} seconds, {training_time/60:.2f} minutes")
-
+            print(f"losses: {losses}")
             if debug:
                 path = os.path.join(datadir_path, "plots")
             else:
