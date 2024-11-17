@@ -37,7 +37,7 @@ print("CUDA device count:", torch.cuda.device_count())
 
 # hyperparameters
 input_size = 30
-hidden_size = [64, 32] if debug else [1024, 512]
+hidden_size = [1024, 512]
 epochs = 4 if debug else 15
 # batch_size = 1
 criteria = 0.5
@@ -71,14 +71,12 @@ def check_gradients(asd_model):
                 print(f"Warning: Vanishing gradient detected in {name}")
 
 test_num = 1
-for batch_size in [1000, 100, 30]:
+for batch_size in [200, 24]:
     X, Y = split_file(X_loaded, Y_loaded, batch_size=batch_size, shuffle=shuffle_batches)
-    X = X[:20000]
-    Y = Y[:20000]
     #X_dev, Y_dev = split_file(X_dev_loded, Y_dev_loaded, batch_size=50000)
     X_dev, Y_dev = X_dev_loded, Y_dev_loaded
-    for hidden_size in [[1024, 512], [256, 128]]:
-        for learning_rate in [0.0001]:
+    for hidden_size in [[1024, 512], [2048, 2048]]:
+        for learning_rate in [0.001, 0.0001]:
             print(f"\n\nbatch_size: {batch_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
             print(f"X batch size: {len(X)}, X_dev batch size {len(X_dev)}")
             # model
