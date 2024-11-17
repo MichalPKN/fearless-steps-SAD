@@ -75,7 +75,8 @@ for batch_size in [1000, 100, 30]:
     X, Y = split_file(X_loaded, Y_loaded, batch_size=batch_size, shuffle=shuffle_batches)
     X = X[:20000]
     Y = Y[:20000]
-    X_dev, Y_dev = split_file(X_dev_loded, Y_dev_loaded, batch_size=50000)
+    #X_dev, Y_dev = split_file(X_dev_loded, Y_dev_loaded, batch_size=50000)
+    X_dev, Y_dev = X_dev_loded, Y_dev_loaded
     for hidden_size in [[1024, 512], [256, 128]]:
         for learning_rate in [0.0001]:
             print(f"\n\nbatch_size: {batch_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
@@ -193,6 +194,7 @@ for batch_size in [1000, 100, 30]:
                             toshow_y = batch_y
                             toshow_preds = preds
                             toshow_outputs = outputs
+                            toshow_additional = dev_info[3][i]
                     # for batch_x, batch_y, mask in dataloader_dev:
                     #     batch_x, batch_y, mask = batch_x.to(device), batch_y.to(device),    mask.to(device)
                     #     outputs = sad_model(batch_x)
@@ -222,7 +224,7 @@ for batch_size in [1000, 100, 30]:
             else:
                 path = "/storage/brno2/home/miapp/fearless-steps-SAD/fearless-steps-SAD/plots"
             
-            plot_result(toshow_y.cpu().numpy(), toshow_preds.cpu().numpy(), toshow_outputs.cpu().detach().numpy(), losses, \
+            plot_result(toshow_y.cpu().numpy(), toshow_preds.cpu().numpy(), toshow_outputs.cpu().detach().numpy(), toshow_additional, \
                         path=path, file_name="sad_prediction_comparison_hp_" + str(test_num) + ".png", debug=False, \
                         title=f"batch_size: {batch_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
             test_num += 1

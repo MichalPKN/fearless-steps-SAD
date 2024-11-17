@@ -18,11 +18,11 @@ class LoadAudio:
         X = []
         print(f"Loading audio from {audio_dir}")
         print(os.listdir(audio_dir))
-        for i, filename in enumerate(os.listdir(audio_dir)):
+        for i, filename in enumerate(sorted(os.listdir(audio_dir))):
             if filename.endswith(".wav"):
                 file_path = os.path.join(audio_dir, filename)
                 audio_data, sample_rate = librosa.load(file_path, sr=None)
-                audio_info[3].append(audio_data)
+                audio_info[3].append([filename, audio_data, sample_rate])
                 features = self.extract_features(file_path)
                 #audio_info = self.extract_audio_info(file_path)
                 if features is not None:
@@ -34,7 +34,7 @@ class LoadAudio:
         if labels_path is not None:
             print(f"Loading labels from {labels_path}")
             print(os.listdir(labels_path))
-            for i, filename in enumerate(os.listdir(labels_path)):
+            for i, filename in enumerate(sorted(os.listdir(labels_path))):
                 label_path = os.path.join(labels_path, filename)
                 labels_f, num_of_1s, num_of_0s = self.add_labels(label_path, X[i])
                 audio_info[0] += num_of_1s

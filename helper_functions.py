@@ -5,6 +5,7 @@ import torch
 from torch.utils.data import Dataset
 from torch.nn import functional as F
 import os
+import librosa
 
 
 def plot_result(y_actual, y_pred, processed_predictions=None, additional=None, path="", file_name="sad_prediction_comparison.png", debug=False, title="actual vs predictions"):    
@@ -29,11 +30,17 @@ def plot_result(y_actual, y_pred, processed_predictions=None, additional=None, p
     # axs[2].set_ylabel("Difference")
     # axs[2].set_xlabel("Time Steps")
     # axs[2].legend(loc="upper right")
-    if additional is not None: # losses
-        axs[2].plot(additional, label="Loss", color="purple")
-        axs[2].set_ylabel("Loss")
-        axs[2].set_xlabel("Batch Steps")
-        axs[2].legend(loc="upper right")
+    y = additional[1]
+    sr = additional[2]
+    if additional is not None:
+        S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, fmax=8000)
+        S_dB = librosa.power_to_db(S, ref=np.max)
+
+        img = librosa.display.specshow(S_dB, sr=sr, x_axis='time', y_axis='mel', cmap='coolwarm', ax=axs[2])
+        img = librosa.display.specshow(S_dB, sr=sr, x_axis='time', y_axis='mel', cmap='coolwarm', ax=axs[2])
+        fig.colorbar(img, ax=axs[2], format='%+2.0f dB')
+        axs[2].set_xlabel("Time")
+        axs[2].set_ylabel("Frequency (Hz)")
 
     plt.suptitle(title)
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
