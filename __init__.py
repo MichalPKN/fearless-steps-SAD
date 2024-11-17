@@ -62,8 +62,8 @@ test_num = 1
 for batch_size in [1000, 100, 30]:
     X, Y = split_file(X, Y, batch_size=batch_size, shuffle=shuffle_batches)
     X_dev, Y_dev = split_file(X_dev, Y_dev, batch_size=50000)
-    for hidden_size in [[1024, 512], [2048, 2048]]:
-        for learning_rate in [0.0001, 0.00001]:
+    for hidden_size in [[1024, 512]]:
+        for learning_rate in [0.0001]:
             print(f"\n\nbatch_size: {batch_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
             print(f"X batch size: {len(X)}, X_dev batch size {len(X_dev)}")
             # model
@@ -95,7 +95,7 @@ for batch_size in [1000, 100, 30]:
                 fn_time = 0
                 y_speech_time = 0
                 y_nonspeech_time = 0
-                for i in range(len(X)):
+                for i in range(1000):   #len(X)):
                     batch_x, batch_y = torch.tensor(X[i], dtype=torch.float32), torch.tensor(Y[i], dtype=torch.float32)
                     batch_x, batch_y = batch_x.to(device), batch_y.to(device)
                     

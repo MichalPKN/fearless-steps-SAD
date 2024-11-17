@@ -64,6 +64,7 @@ class SADDataset(Dataset):
         # y_cut = y[:self.min_len]
         # return x_cut, y_cut
 
+
 def split_file(X, y, batch_size=10000, shuffle=False):
     X_batches = []
     y_batches = []
@@ -72,11 +73,11 @@ def split_file(X, y, batch_size=10000, shuffle=False):
             X_batches.append(X[j][i:i + batch_size])
             y_batches.append(y[j][i:i + batch_size])
         
-        # remainder batch
-        if (len(X[j])-1) % batch_size != 0 and len(X[j]) % batch_size != 0:
-            X_batches.append(X[j][len(X[j]) - len(X[j]) % batch_size:])
-            y_batches.append(y[j][len(y[j]) - len(y[j]) % batch_size:])
-            print("Remainder batch added of length: ", len(X[j]) % batch_size)
+        # # remainder batch
+        # if (len(X[j])-1) % batch_size != 0 and len(X[j]) % batch_size != 0:
+        #     X_batches.append(X[j][len(X[j]) - len(X[j]) % batch_size:])
+        #     y_batches.append(y[j][len(y[j]) - len(y[j]) % batch_size:])
+        #     print("Remainder batch added of length: ", len(X[j]) % batch_size)
             
     if shuffle:
         zipped = list(zip(X_batches, y_batches))
