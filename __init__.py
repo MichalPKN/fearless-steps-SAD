@@ -49,19 +49,19 @@ shuffle_batches = True
 data_loader = load.LoadAudio(debug=debug, input_size=input_size, frame_length=frame_length)
 
 # train data
-X, audio_info, Y = data_loader.load_all(train_path, train_labels)
-dataset = SADDataset(X, Y)
+X_loaded, audio_info, Y_loaded = data_loader.load_all(train_path, train_labels)
+dataset = SADDataset(X_loaded, Y_loaded)
 #dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False) # maybe shuffle True
 
 # dev data
-X_dev, dev_info, Y_dev = data_loader.load_all(dev_path, dev_labels)
-dataset_dev = SADDataset(X_dev, Y_dev, max_len=dataset.max_len)
+X_dev_loded, dev_info, Y_dev_loaded = data_loader.load_all(dev_path, dev_labels)
+dataset_dev = SADDataset(X_dev_loded, Y_dev_loaded, max_len=dataset.max_len)
 #dataloader_dev = DataLoader(dataset_dev, batch_size=batch_size, shuffle=False)
 
 test_num = 1
 for batch_size in [1000, 100, 30]:
-    X, Y = split_file(X, Y, batch_size=batch_size, shuffle=shuffle_batches)
-    X_dev, Y_dev = split_file(X_dev, Y_dev, batch_size=50000)
+    X, Y = split_file(X_loaded, Y_loaded, batch_size=batch_size, shuffle=shuffle_batches)
+    X_dev, Y_dev = split_file(X_dev_loded, Y_dev_loaded, batch_size=50000)
     for hidden_size in [[1024, 512]]:
         for learning_rate in [0.0001]:
             print(f"\n\nbatch_size: {batch_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
