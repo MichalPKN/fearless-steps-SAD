@@ -73,7 +73,7 @@ def check_gradients(asd_model):
 test_num = 1
 for batch_size in [200, 24]:
     X, Y = split_file(X_loaded, Y_loaded, batch_size=batch_size, shuffle=shuffle_batches)
-    #X_dev, Y_dev = split_file(X_dev_loded, Y_dev_loaded, batch_size=50000)
+    X_dev, Y_dev = split_file(X_dev_loded, Y_dev_loaded, batch_size=30000)
     X_dev, Y_dev = X_dev_loded, Y_dev_loaded
     for hidden_size in [[1024, 512], [2048, 2048]]:
         for learning_rate in [0.001, 0.0001]:
