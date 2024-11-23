@@ -5,7 +5,7 @@ import numpy as np
 import os
 import argparse
 import time
-from helper_functions import plot_result, SADDataset, split_file
+from helper_functions import plot_result, SADDataset, split_file, check_gradients, smooth_outputs
 
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -58,19 +58,9 @@ X_dev_loded, dev_info, Y_dev_loaded = data_loader.load_all(dev_path, dev_labels)
 dataset_dev = SADDataset(X_dev_loded, Y_dev_loaded, max_len=dataset.max_len)
 #dataloader_dev = DataLoader(dataset_dev, batch_size=batch_size, shuffle=False)
 
-# Debugging utilities
-def check_gradients(asd_model):
-    """Check for exploding/vanishing gradients."""
-    for name, param in asd_model.named_parameters():
-        if param.grad is not None:
-            grad_norm = param.grad.norm().item()
-            print(f"Gradient norm for {name}: {grad_norm:.4f}")
-            if grad_norm > 1e4:  # Threshold for exploding gradients
-                print(f"Warning: Exploding gradient detected in {name}")
-            elif grad_norm < 1e-6:  # Threshold for vanishing gradients
-                print(f"Warning: Vanishing gradient detected in {name}")
-
 test_num = 1
+X_loaded = X_loaded[:1000] if debug else X_loaded
+Y_loaded = Y_loaded[:1000] if debug else Y_loaded
 for batch_size in [200, 24]:
     X, Y = split_file(X_loaded, Y_loaded, batch_size=batch_size, shuffle=shuffle_batches)
     X_dev, Y_dev = split_file(X_dev_loded, Y_dev_loaded, batch_size=30000)
@@ -143,15 +133,17 @@ for batch_size in [200, 24]:
                     y_speech_time += (batch_y).sum().item()
                     y_nonspeech_time += ((batch_y == 0)).sum().item()
                     
-                    if epoch % 2 == 0 and i == 0:  # Check gradients for the first batch every 2 epochs
-                        print(f"Epoch {epoch+1}, Batch {i}")
-                        check_gradients(sad_model)
+                    ## checking explosing gradients
+                    # if epoch % 2 == 0 and i == 0:  # Check gradients for the first batch every 2 epochs
+                    #     print(f"Epoch {epoch+1}, Batch {i}")
+                    #     check_gradients(sad_model)
                     
                     #print(fp_time, fn_time, y_speech_time, y_nonspeech_time)
                     running_loss += loss.item()
-                    if epoch == 0 and (i < 20 or (i > 150 and i < 170)):
-                        print(f"i: {i}, Loss: {running_loss/(i+1):.4f}, running_loss: {running_loss:.4f}")
-                    if epoch == 0 and i % (len(X) // 20) == 0:
+                    ## debug:
+                    # if epoch == 0 and (i < 20 or (i > 150 and i < 170)):
+                        # print(f"i: {i}, Loss: {running_loss/(i+1):.4f}, running_loss: {running_loss:.4f}")
+                    if epoch == 0 and i % (len(X) // 10) == 0:
                         train_accuracy = correct_predictions / total_predictions
                         pfp = fp_time / (y_nonspeech_time + 0.0001) # false alarm
                         pfn = fn_time / (y_speech_time + 0.0001) # miss
@@ -176,6 +168,8 @@ for batch_size in [200, 24]:
                     fn_time = 0
                     y_speech_time = 0
                     y_nonspeech_time = 0
+                    fp_time_smooth = 0
+                    fn_time_smooth = 0
                     for i in range(len(X_dev)):
                         batch_x, batch_y = torch.tensor(X_dev[i], dtype=torch.float32), torch.tensor(Y_dev[i], dtype=torch.float32)
                         batch_x, batch_y = batch_x.to(device), batch_y.to(device)
@@ -193,6 +187,12 @@ for batch_size in [200, 24]:
                             toshow_preds = preds
                             toshow_outputs = outputs
                             toshow_additional = dev_info[3][i]
+                            
+                        # smoothing:
+                        smooth_preds = smooth_outputs(preds, avg_frames=5)
+                        fp_time_smooth += ((smooth_preds == 1) & (batch_y == 0)).sum().item()
+                        fn_time_smooth += ((smooth_preds == 0) & (batch_y == 1)).sum().item()
+                        
                     # for batch_x, batch_y, mask in dataloader_dev:
                     #     batch_x, batch_y, mask = batch_x.to(device), batch_y.to(device),    mask.to(device)
                     #     outputs = sad_model(batch_x)
@@ -207,9 +207,12 @@ for batch_size in [200, 24]:
                     pfp = fp_time / y_nonspeech_time # false alarm
                     pfn = fn_time / y_speech_time # miss
                     dev_dcf = 0.75 * pfn + 0.25 * pfp
-                
-                    print(f'Validation Accuracy: {dev_accuracy*100:.2f}, Validation DCF: {dev_dcf*100:.4f}')
-                    print("ones pred:", preds.sum(), "ones actual:", batch_y.sum(), "mean:", outputs.mean())
+
+                    pfp_smooth = fp_time_smooth / y_nonspeech_time # false alarm
+                    pfn_smooth = fn_time_smooth / y_speech_time # miss
+                    dev_dcf_smooth = 0.75 * pfn_smooth + 0.25 * pfp_smooth
+                    
+                    print(f'Validation Accuracy: {dev_accuracy*100:.2f}, Validation DCF: {dev_dcf*100:.4f}, Validation DCF smooth: {dev_dcf_smooth*100:.4f}')
                 
                 torch.cuda.empty_cache()
                 

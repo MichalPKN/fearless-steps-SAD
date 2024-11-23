@@ -96,6 +96,23 @@ def split_file(X, y, batch_size=10000, shuffle=False):
         
     return X_batches, y_batches
 
+def check_gradients(asd_model):
+    """Check for exploding/vanishing gradients."""
+    for name, param in asd_model.named_parameters():
+        if param.grad is not None:
+            grad_norm = param.grad.norm().item()
+            print(f"Gradient norm for {name}: {grad_norm:.4f}")
+            if grad_norm > 1e4:  # Threshold for exploding gradients
+                print(f"Warning: Exploding gradient detected in {name}")
+            elif grad_norm < 1e-6:  # Threshold for vanishing gradients
+                print(f"Warning: Vanishing gradient detected in {name}")
+                
+def smooth_outputs(smooth_preds, avg_frames=10):
+    for i in range(smooth_preds.size(0)-avg_frames):
+        smooth_preds[i] = smooth_preds[i:i+avg_frames].mean()
+        smooth_preds[-avg_frames:] = smooth_preds[-avg_frames-1] # TODO: reconsider
+        smooth_preds = (smooth_preds >= 0.5).float()
+
 # def plot_result_plotly(y_actual, y_pred, processed_predictions=None, path="", file_name="sad_prediction_comparison.png", debug=False):    
 #     # Plotting in subplots
 #     fig = go.Figure()
