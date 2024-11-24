@@ -73,7 +73,7 @@ for f_test in range(3):
         # dev data
         X_dev_loded, dev_info, Y_dev_loaded = data_loader.load_all(dev_path, dev_labels)
         dataset_dev = SADDataset(X_dev_loded, Y_dev_loaded, max_len=dataset.max_len)
-    for batch_size in [1000]:
+    for batch_size in [100]:
         if f_test == 2:
             print("-----------------")
             print("No shuffle test")
