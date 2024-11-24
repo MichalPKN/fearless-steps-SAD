@@ -30,17 +30,22 @@ def plot_result(y_actual, y_pred, processed_predictions=None, additional=None, p
     # axs[2].set_ylabel("Difference")
     # axs[2].set_xlabel("Time Steps")
     # axs[2].legend(loc="upper right")
-    y = additional[1]
-    sr = additional[2]
-    if additional is not None:
-        S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, fmax=8000)
-        S_dB = librosa.power_to_db(S, ref=np.max)
+    # y = additional[1]
+    # sr = additional[2]
+    # if additional is not None:
+    #     S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, fmax=8000)
+    #     S_dB = librosa.power_to_db(S, ref=np.max)
 
-        img = librosa.display.specshow(S_dB, sr=sr, x_axis='time', y_axis='mel', cmap='coolwarm', ax=axs[2])
-        img = librosa.display.specshow(S_dB, sr=sr, x_axis='time', y_axis='mel', cmap='coolwarm', ax=axs[2])
-        fig.colorbar(img, ax=axs[2], format='%+2.0f dB')
-        axs[2].set_xlabel("Time")
-        axs[2].set_ylabel("Frequency (Hz)")
+    #     img = librosa.display.specshow(S_dB, sr=sr, x_axis='time', y_axis='mel', cmap='coolwarm', ax=axs[2])
+    #     img = librosa.display.specshow(S_dB, sr=sr, x_axis='time', y_axis='mel', cmap='coolwarm', ax=axs[2])
+    #     fig.colorbar(img, ax=axs[2], format='%+2.0f dB')
+    #     axs[2].set_xlabel("Time")
+    #     axs[2].set_ylabel("Frequency (Hz)")
+    axs[2].plot(additional, label="Smoothed", color="blue", alpha=0.5)
+    if processed_predictions is not None:
+        axs[2].plot(processed_predictions, label="Outputs", color="red", linestyle='--', alpha=0.5)
+    axs[2].set_ylabel("Predictions")
+    axs[2].legend(loc="upper right")
 
     plt.suptitle(title)
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
@@ -108,13 +113,9 @@ def check_gradients(asd_model):
                 print(f"Warning: Vanishing gradient detected in {name}")
                 
 def smooth_outputs(smooth_preds, avg_frames=5):
-    unfolded = smooth_preds.unfold(0, avg_frames, 1).mean(dim=-1)
-    smooth_preds[:-(avg_frames-1)] = unfolded
-    smooth_preds[-(avg_frames-1):] = smooth_preds[-avg_frames:].mean()
-    # for i in range(smooth_preds.size(0)-avg_frames):
-    #     smooth_preds[i] = smooth_preds[i:i+avg_frames].mean()
-    #     smooth_preds[-avg_frames:] = smooth_preds[-avg_frames-1] # TODO: reconsider
-    #     smooth_preds = (smooth_preds >= 0.5).float()
+    unfolded = smooth_preds.unfold(dimension=1, size=avg_frames, step=1).mean(dim=-1)
+    smooth_preds[:, :-(avg_frames-1)] = unfolded
+    smooth_preds[:, -(avg_frames-1):] = smooth_preds[:, -avg_frames:].mean(dim=1, keepdim=True)
     return smooth_preds
 
 # def plot_result_plotly(y_actual, y_pred, processed_predictions=None, path="", file_name="sad_prediction_comparison.png", debug=False):    

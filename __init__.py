@@ -56,7 +56,7 @@ X_loaded, audio_info, Y_loaded = data_loader.load_all(train_path, train_labels)
 
 
 # dev data
-X_dev_loded, dev_info, Y_dev_loaded = data_loader.load_all(dev_path, dev_labels)
+X_dev_loaded, dev_info, Y_dev_loaded = data_loader.load_all(dev_path, dev_labels)
 
 test_num = 1
 for f_test in range(1):
@@ -69,8 +69,8 @@ for f_test in range(1):
     #     X_loaded, audio_info, Y_loaded = data_loader.load_all(train_path, train_labels)
     #     dataset = SADDataset(X_loaded, Y_loaded)
     #     # dev data
-    #     X_dev_loded, dev_info, Y_dev_loaded = data_loader.load_all(dev_path, dev_labels)
-    #     dataset_dev = SADDataset(X_dev_loded, Y_dev_loaded, max_len=dataset.max_len)
+    #     X_dev_loaded, dev_info, Y_dev_loaded = data_loader.load_all(dev_path, dev_labels)
+    #     dataset_dev = SADDataset(X_dev_loaded, Y_dev_loaded, max_len=dataset.max_len)
     for batch_size in [10]:
         # if f_test == 2:
         #     print("-----------------")
@@ -83,11 +83,11 @@ for f_test in range(1):
         print(f"max size: {dataset.max_len}")
         dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle_batches) # maybe shuffle True
 
-        #X_dev, Y_dev = split_file(X_dev_loded, Y_dev_loaded, batch_size=30000, shuffle=shuffle_batches)
-        #X_dev, Y_dev = split_file(X_dev_loded, Y_dev_loaded, batch_size=30000)
+        #X_dev, Y_dev = split_file(X_dev_loaded, Y_dev_loaded, batch_size=30000, shuffle=shuffle_batches)
+        #X_dev, Y_dev = split_file(X_dev_loaded, Y_dev_loaded, batch_size=30000)
         
-        X_dev, Y_dev = split_file(X_dev_loded, Y_dev_loaded, batch_size=audio_size, shuffle=False)
-        dataset_dev = SADDataset(X_dev_loded, Y_dev_loaded, max_len=dataset.max_len)
+        X_dev, Y_dev = split_file(X_dev_loaded, Y_dev_loaded, batch_size=audio_size, shuffle=False)
+        dataset_dev = SADDataset(X_dev, Y_dev, max_len=dataset.max_len)
         dataloader_dev = DataLoader(dataset_dev, batch_size=1, shuffle=False)
         
         for hidden_size in [256]:
@@ -148,7 +148,7 @@ for f_test in range(1):
                         
                         preds = (outputs >= criteria).float()
                         correct_predictions += ((preds == batch_y).float()).sum().item()
-                        total_predictions += len(batch_y)
+                        total_predictions += batch_y.numel()
                         
                         
                         # plot_result(batch_y[0].cpu().numpy(), preds[0].cpu().numpy(), outputs[0].cpu().detach().numpy(), path=datadir_path, file_name="sad_prediction_comparison" + str(i) + ".png", debug=False)
@@ -209,22 +209,22 @@ for f_test in range(1):
                             outputs = torch.sigmoid(outputs)
                             preds = (outputs >= criteria).float()
                             correct_predictions += ((preds == batch_y).float()).sum().item()
-                            total_predictions += len(batch_y)
+                            total_predictions += batch_y.numel()
                             fp_time += ((preds == 1) & (batch_y == 0)).sum().item()
                             fn_time += ((preds == 0) & (batch_y == 1)).sum().item()
                             y_speech_time += (batch_y).sum().item()
                             y_nonspeech_time += ((batch_y == 0)).sum().item()
-                            if i == 0:
-                                toshow_y = batch_y
-                                toshow_preds = preds
-                                toshow_outputs = outputs
-                                toshow_additional = dev_info[3][i]
-                                
+                            
                             # smoothing:
                             smooth_preds = smooth_outputs(preds, avg_frames=5)
                             fp_time_smooth += ((smooth_preds == 1) & (batch_y == 0)).sum().item()
                             fn_time_smooth += ((smooth_preds == 0) & (batch_y == 1)).sum().item()
                             
+                            if i == 0:
+                                toshow_y = batch_y[0]
+                                toshow_preds = preds[0]
+                                toshow_outputs = outputs[0]
+                                toshow_additional = smooth_preds[0]
                             i += 1
                         # for batch_x, batch_y, mask in dataloader_dev:
                         #     batch_x, batch_y, mask = batch_x.to(device), batch_y.to(device),    mask.to(device)
@@ -258,8 +258,7 @@ for f_test in range(1):
                 else:
                     path = "/storage/brno2/home/miapp/fearless-steps-SAD/fearless-steps-SAD/plots"
                 
-                #TODO: [30000:60000] remove/alter
-                plot_result(toshow_y.cpu().numpy()[30000:60000], toshow_preds.cpu().numpy()[30000:60000], toshow_outputs.cpu().detach().numpy()[30000:60000], toshow_additional, \
+                plot_result(toshow_y.cpu().numpy(), toshow_preds.cpu().numpy(), toshow_outputs.cpu().detach().numpy(), toshow_additional, \
                             path=path, file_name="sad_prediction_comparison_hp_" + str(test_num) + ".png", debug=False, \
                             title=f"batch_size: {batch_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
                 test_num += 1

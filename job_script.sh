@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -q gpu@pbs-m1.metacentrum.cz
 #PBS -l walltime=2:0:0
-#PBS -l select=1:ncpus=1:ngpus=1:mem=32gb:scratch_ssd=32gb
+#PBS -l select=1:ncpus=1:ngpus=1:mem=32gb:scratch_ssd=50gb:cuda_version=12.6
 #PBS -N Training_script
 DATADIR=/storage/brno2/home/miapp/fearless-steps-SAD/fearless-steps-SAD
 chmod 700 $SCRATCHDIR
@@ -16,7 +16,7 @@ nvidia-smi
 echo $CUDA_VISIBLE_DEVICES
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 echo "cuda checked"
-> $DATADIR/print_outputs.log
-python3 -u __init__.py --datadir $SCRATCHDIR >> $DATADIR/print_outputs.log
+> $DATADIR/print_outputs_rnn.log
+python3 -u __init__.py --datadir $SCRATCHDIR >> $DATADIR/print_outputs_rnn.log
 cp -R outs $DATADIR/outs/$JOID
 clean_scratch
