@@ -2,6 +2,7 @@ print("starting code")
 import load
 import model
 import model2l
+import model_rnn
 import numpy as np
 import os
 import argparse
@@ -44,53 +45,57 @@ epochs = 4 if debug else 35
 criteria = 0.5
 # learning_rate = 0.001
 frame_length = 0.01
-#num_layers = 3 
+num_layers = 2
 shuffle_batches = True
+audio_size = 10000
 
 data_loader = load.LoadAudio(debug=debug, input_size=input_size, frame_length=frame_length)
 
 # train data
 X_loaded, audio_info, Y_loaded = data_loader.load_all(train_path, train_labels)
-dataset = SADDataset(X_loaded, Y_loaded)
-#dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False) # maybe shuffle True
+
 
 # dev data
 X_dev_loded, dev_info, Y_dev_loaded = data_loader.load_all(dev_path, dev_labels)
-dataset_dev = SADDataset(X_dev_loded, Y_dev_loaded, max_len=dataset.max_len)
-#dataloader_dev = DataLoader(dataset_dev, batch_size=batch_size, shuffle=False)
 
 test_num = 1
-X_loaded = X_loaded[:1000] if debug else X_loaded
-Y_loaded = Y_loaded[:1000] if debug else Y_loaded
 for f_test in range(1):
-    if f_test == 3:
-        print("-----------------")
-        print("No mfcc norm test")
-        print("-----------------")
-        data_loader = load.LoadAudio(debug=debug, input_size=input_size, frame_length=frame_length, norm=False)
-        # train data
-        X_loaded, audio_info, Y_loaded = data_loader.load_all(train_path, train_labels)
-        dataset = SADDataset(X_loaded, Y_loaded)
-        # dev data
-        X_dev_loded, dev_info, Y_dev_loaded = data_loader.load_all(dev_path, dev_labels)
-        dataset_dev = SADDataset(X_dev_loded, Y_dev_loaded, max_len=dataset.max_len)
-    for batch_size in [10000]:
-        if f_test == 2:
-            print("-----------------")
-            print("No shuffle test")
-            print("-----------------")
-            X, Y = split_file(X_loaded, Y_loaded, batch_size=batch_size, shuffle=False)
-        else:
-            X, Y = split_file(X_loaded, Y_loaded, batch_size=batch_size, shuffle=shuffle_batches)
-        # X_dev, Y_dev = split_file(X_dev_loded, Y_dev_loaded, batch_size=30000, shuffle=shuffle_batches)
+    # if f_test == 3:
+    #     print("-----------------")
+    #     print("No mfcc norm test")
+    #     print("-----------------")
+    #     data_loader = load.LoadAudio(debug=debug, input_size=input_size, frame_length=frame_length, norm=False)
+    #     # train data
+    #     X_loaded, audio_info, Y_loaded = data_loader.load_all(train_path, train_labels)
+    #     dataset = SADDataset(X_loaded, Y_loaded)
+    #     # dev data
+    #     X_dev_loded, dev_info, Y_dev_loaded = data_loader.load_all(dev_path, dev_labels)
+    #     dataset_dev = SADDataset(X_dev_loded, Y_dev_loaded, max_len=dataset.max_len)
+    for batch_size in [10]:
+        # if f_test == 2:
+        #     print("-----------------")
+        #     print("No shuffle test")
+        #     print("-----------------")
+        #     X, Y = split_file(X_loaded, Y_loaded, batch_size=batch_size, shuffle=False)
+        # else:
+        X, Y = split_file(X_loaded, Y_loaded, batch_size=audio_size, shuffle=False)
+        dataset = SADDataset(X, Y) 
+        print(f"max size: {dataset.max_len}")
+        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle_batches) # maybe shuffle True
+
+        #X_dev, Y_dev = split_file(X_dev_loded, Y_dev_loaded, batch_size=30000, shuffle=shuffle_batches)
         #X_dev, Y_dev = split_file(X_dev_loded, Y_dev_loaded, batch_size=30000)
-        X_dev, Y_dev = X_dev_loded, Y_dev_loaded
-        for hidden_size in [[1024, 512]]:
+        
+        X_dev, Y_dev = split_file(X_dev_loded, Y_dev_loaded, batch_size=audio_size, shuffle=False)
+        dataset_dev = SADDataset(X_dev_loded, Y_dev_loaded, max_len=dataset.max_len)
+        dataloader_dev = DataLoader(dataset_dev, batch_size=1, shuffle=False)
+        
+        for hidden_size in [256]:
             for learning_rate in [0.0005]:
                 print(f"\n\nbatch_size: {batch_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
-                print(f"X batch size: {len(X)}, X_dev batch size {len(X_dev)}")
+                print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
                 # model
-                sad_model = model2l.SADModel(input_size, hidden_size).to(device)
+                sad_model = model_rnn.SADModel(input_size, hidden_size, num_layers).to(device)
                 # weight
                 one_ratio = audio_info[0] / audio_info[2]
                 zero_ratio = audio_info[1] / audio_info[2]
@@ -109,7 +114,7 @@ for f_test in range(1):
 
                 # training
                 load_time = time.time() - start_time
-                print(f"Data loaded in {load_time:.2f} seconds")
+                print(f"Data loaded in {load_time:.2f} seconds, {load_time/60:.2f} minutes")
 
                 print("training model")
                 # i = 1
@@ -124,8 +129,8 @@ for f_test in range(1):
                     fn_time = 0
                     y_speech_time = 0
                     y_nonspeech_time = 0
-                    for i in range(len(X)):   #len(X)):
-                        batch_x, batch_y = torch.tensor(X[i], dtype=torch.float32), torch.tensor(Y[i], dtype=torch.float32)
+                    i = 0
+                    for batch_x, batch_y, mask in dataloader:
                         batch_x, batch_y = batch_x.to(device), batch_y.to(device)
                         
                         
@@ -177,6 +182,7 @@ for f_test in range(1):
                             print(f'first epoch, Loss: {loss:.4f}, Accuracy: {train_accuracy*100:.2f}, DCF: {dcf*100:.2f}')
                             print("size:", len(preds), "fp_time:", preds.sum(), "ones actual:", batch_y.sum(), "mean:", outputs.mean())
                             print("-----------------------------")
+                        i += 1
                     train_accuracy = correct_predictions / total_predictions
                     pfp = fp_time / y_nonspeech_time # false alarm
                     pfn = fn_time / y_speech_time # miss
@@ -186,7 +192,7 @@ for f_test in range(1):
                     print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/len(X):.4f}, Accuracy: {train_accuracy*100:.2f}, DCF: {dcf*100:.2f}")
                     
                     # eval
-                    sad_model.eval()    
+                    sad_model.eval()
                     with torch.no_grad():
                         correct_predictions = 0
                         total_predictions = 0
@@ -196,8 +202,8 @@ for f_test in range(1):
                         y_nonspeech_time = 0
                         fp_time_smooth = 0
                         fn_time_smooth = 0
-                        for i in range(len(X_dev)):
-                            batch_x, batch_y = torch.tensor(X_dev[i], dtype=torch.float32), torch.tensor(Y_dev[i], dtype=torch.float32)
+                        i = 0
+                        for batch_x, batch_y, mask in dataloader_dev:
                             batch_x, batch_y = batch_x.to(device), batch_y.to(device)
                             outputs = sad_model(batch_x)
                             outputs = torch.sigmoid(outputs)
@@ -219,6 +225,7 @@ for f_test in range(1):
                             fp_time_smooth += ((smooth_preds == 1) & (batch_y == 0)).sum().item()
                             fn_time_smooth += ((smooth_preds == 0) & (batch_y == 1)).sum().item()
                             
+                            i += 1
                         # for batch_x, batch_y, mask in dataloader_dev:
                         #     batch_x, batch_y, mask = batch_x.to(device), batch_y.to(device),    mask.to(device)
                         #     outputs = sad_model(batch_x)
@@ -240,7 +247,7 @@ for f_test in range(1):
                         
                         print(f'Validation Accuracy: {dev_accuracy*100:.2f}, Validation DCF: {dev_dcf*100:.4f}, Validation DCF smooth: {dev_dcf_smooth*100:.4f}')
                     
-                    torch.cuda.empty_cache()
+                torch.cuda.empty_cache()
                     
                 print("finished training model")
                 training_time = time.time() - start_time - load_time
@@ -257,5 +264,5 @@ for f_test in range(1):
                             title=f"batch_size: {batch_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
                 test_num += 1
             
-print(f"Total time: {time.time() - start_time:.2f} seconds")
+print(f"Total time: {time.time() - start_time:.2f} seconds, {training_time/60:.2f} minutes, {training_time/3600:.2f} hours")
             
