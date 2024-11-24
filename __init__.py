@@ -1,4 +1,6 @@
 print("starting code")
+with open("/storage/brno2/home/miapp/fearless-steps-SAD/fearless-steps-SAD/print_outputs.log", "a") as file:
+    file.write("\nTesting.... Testing....\n")
 import load
 import model
 import model2l
