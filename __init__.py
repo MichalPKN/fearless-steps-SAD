@@ -90,8 +90,8 @@ for f_test in range(1):
         dataset_dev = SADDataset(X_dev, Y_dev, max_len=dataset.max_len)
         dataloader_dev = DataLoader(dataset_dev, batch_size=1, shuffle=False)
         
-        for hidden_size in [256]:
-            for learning_rate in [0.0005]:
+        for hidden_size in [512]:
+            for learning_rate in [0.0001]:
                 print(f"\n\nbatch_size: {batch_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
                 print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
                 # model
