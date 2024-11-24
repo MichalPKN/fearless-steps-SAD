@@ -10,12 +10,12 @@ module add mambaforge
 mamba activate /storage/brno2/home/miapp/.conda/envs/sadenv
 ls -R $SCRATCHDIR > $DATADIR/debugprint
 cd $SCRATCHDIR
-echo "cuda?:"
+echo "cuda exists?:"
 module add cuda/
 nvidia-smi
 echo $CUDA_VISIBLE_DEVICES
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
-echo "-cuda-"
-python3 __init__.py --datadir $SCRATCHDIR| tee -a $DATADIR/print_outputs.log
+echo "cuda checked"
+python3 __init__.py --datadir $SCRATCHDIR| tee $DATADIR/print_outputs.log
 cp -R outs $DATADIR/outs/$JOID
 clean_scratch
