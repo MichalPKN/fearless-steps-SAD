@@ -1,3 +1,4 @@
+print("starting code")
 import load
 import model
 import model2l
@@ -61,7 +62,7 @@ dataset_dev = SADDataset(X_dev_loded, Y_dev_loaded, max_len=dataset.max_len)
 test_num = 1
 X_loaded = X_loaded[:1000] if debug else X_loaded
 Y_loaded = Y_loaded[:1000] if debug else Y_loaded
-for f_test in range(4):
+for f_test in range(1):
     if f_test == 3:
         print("-----------------")
         print("No mfcc norm test")
