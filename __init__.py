@@ -1,6 +1,3 @@
-print("starting code")
-with open("/storage/brno2/home/miapp/fearless-steps-SAD/fearless-steps-SAD/print_outputs.log", "a") as file:
-    file.write("\nTesting.... Testing....\n")
 import load
 import model
 import model2l
@@ -41,7 +38,7 @@ print("CUDA device count:", torch.cuda.device_count())
 # hyperparameters
 input_size = 30
 hidden_size = [1024, 512]
-epochs = 4 if debug else 35
+epochs = 4 if debug else 25
 # batch_size = 1
 criteria = 0.5
 # learning_rate = 0.001
@@ -64,7 +61,7 @@ dataset_dev = SADDataset(X_dev_loded, Y_dev_loaded, max_len=dataset.max_len)
 test_num = 1
 X_loaded = X_loaded[:1000] if debug else X_loaded
 Y_loaded = Y_loaded[:1000] if debug else Y_loaded
-for f_test in range(1):
+for f_test in range(0, 2):
     if f_test == 3:
         print("-----------------")
         print("No mfcc norm test")
