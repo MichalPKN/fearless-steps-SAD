@@ -212,11 +212,11 @@ for f_test in range(2):
                                 fp_time_smooth[window_idx] += ((smooth_preds == 1) & (batch_y == 0)).sum().item()
                                 fn_time_smooth[window_idx] += ((smooth_preds == 0) & (batch_y == 1)).sum().item()
                             
-                            if i == 0:
-                                toshow_y = batch_y[0]
-                                toshow_preds = preds[0]
-                                toshow_outputs = outputs[0]
-                                toshow_additional = smooth_preds[0]
+                            # if i == 0:
+                            #     toshow_y = batch_y[0]
+                            #     toshow_preds = preds[0]
+                            #     toshow_outputs = outputs[0]
+                            #     toshow_additional = smooth_preds[0]
                             i += 1
                         # for batch_x, batch_y, mask in dataloader_dev:
                         #     batch_x, batch_y, mask = batch_x.to(device), batch_y.to(device),    mask.to(device)
