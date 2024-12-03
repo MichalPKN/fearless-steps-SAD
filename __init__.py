@@ -40,7 +40,7 @@ print("CUDA device count:", torch.cuda.device_count())
 # hyperparameters
 input_size = 30
 hidden_size = [1024, 512]
-epochs = 4 if debug else 35
+epochs = 3 if debug else 35
 # batch_size = 1
 criteria = 0.5
 # learning_rate = 0.001
@@ -54,30 +54,24 @@ data_loader = load.LoadAudio(debug=debug, input_size=input_size, frame_length=fr
 # train data
 X_loaded, audio_info, Y_loaded = data_loader.load_all(train_path, train_labels)
 
+# train test split
+print(f"num of data: {len(X_loaded)}")
+dev_idxs = [1] if debug else [5, 27, 43, 68, 91, 112]
+X_dev_loaded = [X_loaded[i] for i in dev_idxs]
+Y_dev_loaded = [Y_loaded[i] for i in dev_idxs]
+X_loaded = [X_loaded[i] for i in range(len(X_loaded)) if i not in dev_idxs]
+Y_loaded = [Y_loaded[i] for i in range(len(Y_loaded)) if i not in dev_idxs]
+print(f"num of trainig data: {len(X_loaded)}, num of dev data: {len(X_dev_loaded)}")
 
-# dev data
-X_dev_loaded, dev_info, Y_dev_loaded = data_loader.load_all(dev_path, dev_labels)
+# eval data
+X_val_loaded, val_info, Y_val_loaded = data_loader.load_all(dev_path, dev_labels)
+print(f"num of eval data: {len(X_val_loaded)}")
 
+
+# training
 test_num = 1
-for f_test in range(1):
-    # if f_test == 3:
-    #     print("-----------------")
-    #     print("No mfcc norm test")
-    #     print("-----------------")
-    #     data_loader = load.LoadAudio(debug=debug, input_size=input_size, frame_length=frame_length, norm=False)
-    #     # train data
-    #     X_loaded, audio_info, Y_loaded = data_loader.load_all(train_path, train_labels)
-    #     dataset = SADDataset(X_loaded, Y_loaded)
-    #     # dev data
-    #     X_dev_loaded, dev_info, Y_dev_loaded = data_loader.load_all(dev_path, dev_labels)
-    #     dataset_dev = SADDataset(X_dev_loaded, Y_dev_loaded, max_len=dataset.max_len)
+for f_test in range(2):
     for batch_size in [10]:
-        # if f_test == 2:
-        #     print("-----------------")
-        #     print("No shuffle test")
-        #     print("-----------------")
-        #     X, Y = split_file(X_loaded, Y_loaded, batch_size=batch_size, shuffle=False)
-        # else:
         X, Y = split_file(X_loaded, Y_loaded, batch_size=audio_size, shuffle=False)
         dataset = SADDataset(X, Y) 
         print(f"max size: {dataset.max_len}")
@@ -89,6 +83,10 @@ for f_test in range(1):
         X_dev, Y_dev = split_file(X_dev_loaded, Y_dev_loaded, batch_size=audio_size, shuffle=False)
         dataset_dev = SADDataset(X_dev, Y_dev, max_len=dataset.max_len)
         dataloader_dev = DataLoader(dataset_dev, batch_size=1, shuffle=False)
+        
+        X_val, Y_val = split_file(X_val_loaded, Y_val_loaded, batch_size=audio_size, shuffle=False)
+        dataset_val = SADDataset(X_val, Y_val, max_len=dataset.max_len)
+        dataloader_val = DataLoader(dataset_val, batch_size=1, shuffle=False)
         
         for hidden_size in [512]:
             for learning_rate in [0.0001]:
@@ -118,10 +116,10 @@ for f_test in range(1):
 
                 print("training model")
                 # i = 1
+                losses = np.zeros(epochs)
                 for epoch in range(epochs):
                     # train
                     sad_model.train()
-                    losses = np.zeros(epochs)
                     running_loss = 0.0
                     correct_predictions = 0
                     total_predictions = 0
@@ -149,16 +147,7 @@ for f_test in range(1):
                         preds = (outputs >= criteria).float()
                         correct_predictions += ((preds == batch_y).float()).sum().item()
                         total_predictions += batch_y.numel()
-                        
-                        
-                        # plot_result(batch_y[0].cpu().numpy(), preds[0].cpu().numpy(), outputs[0].cpu().detach().numpy(), path=datadir_path, file_name="sad_prediction_comparison" + str(i) + ".png", debug=False)
-                        # i += 1
-                        
-                        #print("predsum: ", preds.sum(), "batch_y sum: ", batch_y.sum())
-                        
-                        #print(preds.shape)
-                        # Backward
-                        
+
                         fp_time += ((preds == 1) & (batch_y == 0)).sum().item()
                         fn_time += ((preds == 0) & (batch_y == 1)).sum().item()
                         y_speech_time += (batch_y).sum().item()
@@ -191,7 +180,7 @@ for f_test in range(1):
                     print()
                     print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/len(X):.4f}, Accuracy: {train_accuracy*100:.2f}, DCF: {dcf*100:.2f}")
                     
-                    # eval
+                    # dev
                     sad_model.eval()
                     with torch.no_grad():
                         correct_predictions = 0
@@ -245,9 +234,66 @@ for f_test in range(1):
                         pfn_smooth = fn_time_smooth / y_speech_time # miss
                         dev_dcf_smooth = 0.75 * pfn_smooth + 0.25 * pfp_smooth
                         
-                        print(f'Validation Accuracy: {dev_accuracy*100:.2f}, Validation DCF: {dev_dcf*100:.4f}, Validation DCF smooth: {dev_dcf_smooth*100:.4f}')
+                        print(f'Dev Accuracy: {dev_accuracy*100:.2f}, Dev DCF: {dev_dcf*100:.4f}, Dev DCF smooth: {dev_dcf_smooth*100:.4f}')
                     
                 torch.cuda.empty_cache()
+                
+                # eval
+                sad_model.eval()
+                with torch.no_grad():
+                    correct_predictions = 0
+                    total_predictions = 0
+                    fp_time = 0
+                    fn_time = 0
+                    y_speech_time = 0
+                    y_nonspeech_time = 0
+                    fp_time_smooth = 0
+                    fn_time_smooth = 0
+                    i = 0
+                    for batch_x, batch_y, mask in dataloader_val:
+                        batch_x, batch_y = batch_x.to(device), batch_y.to(device)
+                        outputs = sad_model(batch_x)
+                        outputs = torch.sigmoid(outputs)
+                        preds = (outputs >= criteria).float()
+                        correct_predictions += ((preds == batch_y).float()).sum().item()
+                        total_predictions += batch_y.numel()
+                        fp_time += ((preds == 1) & (batch_y == 0)).sum().item()
+                        fn_time += ((preds == 0) & (batch_y == 1)).sum().item()
+                        y_speech_time += (batch_y).sum().item()
+                        y_nonspeech_time += ((batch_y == 0)).sum().item()
+                        
+                        # smoothing:
+                        smooth_preds = smooth_outputs(preds, avg_frames=5)
+                        fp_time_smooth += ((smooth_preds == 1) & (batch_y == 0)).sum().item()
+                        fn_time_smooth += ((smooth_preds == 0) & (batch_y == 1)).sum().item()
+                        
+                        if i == 0:
+                            toshow_y = batch_y[0]
+                            toshow_preds = preds[0]
+                            toshow_outputs = outputs[0]
+                            toshow_additional = smooth_preds[0]
+                        i += 1
+                    # for batch_x, batch_y, mask in dataloader_val:
+                    #     batch_x, batch_y, mask = batch_x.to(device), batch_y.to(device),    mask.to(device)
+                    #     outputs = sad_model(batch_x)
+                    #     preds = (outputs >= criteria).float()
+                    #     correct_predictions += ((preds == batch_y).float() * mask).sum().item()
+                    #     total_predictions += mask.sum().item()
+                    #     fp_time += (((preds == 1) & (batch_y == 0)) * mask).sum().item()
+                    #     fn_time += (((preds == 0) & (batch_y == 1)) * mask).sum().item()
+                    #     y_speech_time += (batch_y * mask).sum().item()
+                    #     y_nonspeech_time += ((batch_y == 0) * mask).sum().item()
+                    dev_accuracy = correct_predictions / total_predictions
+                    pfp = fp_time / y_nonspeech_time # false alarm
+                    pfn = fn_time / y_speech_time # miss
+                    dev_dcf = 0.75 * pfn + 0.25 * pfp
+
+                    pfp_smooth = fp_time_smooth / y_nonspeech_time # false alarm
+                    pfn_smooth = fn_time_smooth / y_speech_time # miss
+                    dev_dcf_smooth = 0.75 * pfn_smooth + 0.25 * pfp_smooth
+                    
+                    print(f'Validation Accuracy: {dev_accuracy*100:.2f}, Validation DCF: {dcf*100:.4f}, Validation DCF smooth: {dev_dcf_smooth*100:.4f}')
+                    
                     
                 print("finished training model")
                 training_time = time.time() - start_time - load_time
