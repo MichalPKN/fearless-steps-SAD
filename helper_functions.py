@@ -107,10 +107,12 @@ def check_gradients(asd_model):
             elif grad_norm < 1e-6:  # Threshold for vanishing gradients
                 print(f"Warning: Vanishing gradient detected in {name}")
                 
-def smooth_outputs(smooth_preds, avg_frames=5):
+def smooth_outputs(smooth_preds, avg_frames=5, criteria=None):
     unfolded = smooth_preds.unfold(0, avg_frames, 1).mean(dim=-1)
     smooth_preds[:-(avg_frames-1)] = unfolded
     smooth_preds[-(avg_frames-1):] = smooth_preds[-avg_frames:].mean()
+    if criteria is not None:
+        smooth_preds = (smooth_preds >= criteria).float()
     # for i in range(smooth_preds.size(0)-avg_frames):
     #     smooth_preds[i] = smooth_preds[i:i+avg_frames].mean()
     #     smooth_preds[-avg_frames:] = smooth_preds[-avg_frames-1] # TODO: reconsider

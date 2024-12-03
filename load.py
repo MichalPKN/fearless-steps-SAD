@@ -27,7 +27,7 @@ class LoadAudio:
                 if features is not None:
                     X.append(features)
                     #audio_info_list.append(audio_info)
-            if self.debug and i >= 1:
+            if self.debug and i >= 2:
                 break
         print(f"Loaded {len(X)} audio files")
         if labels_path is not None:
@@ -42,7 +42,7 @@ class LoadAudio:
                     print(f"Error: num_of_0s + num_of_1s != len(labels_f) for {label_path}")
                     print(f"num_of_0s: {num_of_0s}, num_of_1s: {num_of_1s}, len(labels_f): {len(labels_f)}")
                 labels.append(labels_f)
-                if self.debug and i >= 1:
+                if self.debug and i >= 2:
                     break
             print(f"Loaded {len(labels)} labels")
             
