@@ -203,14 +203,15 @@ for f_test in range(3):
                     # dev
                     sad_model.eval()    
                     with torch.no_grad():
+                        smooth_window = [5, 15, 50, 150]
                         correct_predictions = 0
                         total_predictions = 0
                         fp_time = 0
                         fn_time = 0
                         y_speech_time = 0
                         y_nonspeech_time = 0
-                        fp_time_smooth = 0
-                        fn_time_smooth = 0
+                        fp_time_smooth = [0 for asd in range(len(smooth_window))]
+                        fn_time_smooth = [0 for asd in range(len(smooth_window))]
                         for i in range(len(X_dev)):
                             batch_x, batch_y = torch.tensor(X_dev[i], dtype=torch.float32), torch.tensor(Y_dev[i], dtype=torch.float32)
                             batch_x, batch_y = batch_x.to(device), batch_y.to(device)
@@ -223,6 +224,8 @@ for f_test in range(3):
                             fn_time += ((preds == 0) & (batch_y == 1)).sum().item()
                             y_speech_time += (batch_y).sum().item()
                             y_nonspeech_time += ((batch_y == 0)).sum().item()
+                            
+                            
                             # if i == 0:
                             #     toshow_y = batch_y
                             #     toshow_preds = preds
@@ -230,9 +233,10 @@ for f_test in range(3):
                             #     toshow_additional = val_info[3][i]
                                 
                             # smoothing:
-                            smooth_preds = smooth_outputs(preds, avg_frames=5, criteria=criteria)
-                            fp_time_smooth += ((smooth_preds == 1) & (batch_y == 0)).sum().item()
-                            fn_time_smooth += ((smooth_preds == 0) & (batch_y == 1)).sum().item()
+                            for window_idx, window in enumerate(smooth_window):
+                                smooth_preds = smooth_outputs(preds, avg_frames=window, criteria=criteria)
+                                fp_time_smooth[window_idx] += ((smooth_preds == 1) & (batch_y == 0)).sum().item()
+                                fn_time_smooth[window_idx] += ((smooth_preds == 0) & (batch_y == 1)).sum().item()
                             
                         # for batch_x, batch_y, mask in dataloader_dev:
                         #     batch_x, batch_y, mask = batch_x.to(device), batch_y.to(device),    mask.to(device)
@@ -249,12 +253,18 @@ for f_test in range(3):
                         pfn = fn_time / y_speech_time # miss
                         dev_dcf = 0.75 * pfn + 0.25 * pfp
 
-                        pfp_smooth = fp_time_smooth / y_nonspeech_time # false alarm
-                        pfn_smooth = fn_time_smooth / y_speech_time # miss
-                        dev_dcf_smooth = 0.75 * pfn_smooth + 0.25 * pfp_smooth
+                        print(f'Dev Accuracy: {dev_accuracy*100:.2f}, Dev DCF: {dev_dcf*100:.4f}')
+                        best_smooth_window_dcf = 101
+                        for window_idx, window in enumerate(smooth_window):
+                            pfp_smooth = fp_time_smooth[window_idx] / y_nonspeech_time
+                            pfn_smooth = fn_time_smooth[window_idx] / y_speech_time
+                            dev_dcf_smooth = 0.75 * pfn_smooth + 0.25 * pfp_smooth
+                            print(f'Dev DCF smooth {window}: {dev_dcf_smooth*100:.4f}', end=", ")
+                            if dev_dcf_smooth < best_smooth_window_dcf:
+                                best_smooth_window_dcf = dev_dcf_smooth
+                                best_smooth_window = window
+                        print()
                         
-                        print(f'Dev Accuracy: {dev_accuracy*100:.2f}, Dev DCF: {dev_dcf*100:.4f}, Dev DCF smooth: {dev_dcf_smooth*100:.4f}')
-                    
                 torch.cuda.empty_cache()
 
                 # eval
@@ -318,4 +328,5 @@ for f_test in range(3):
                 test_num += 1
             
 print(f"Total time: {time.time() - start_time:.2f} seconds")
+print("\n----------------------------------------\n\n\n")
             
