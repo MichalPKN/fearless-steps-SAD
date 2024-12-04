@@ -63,7 +63,6 @@ class LoadAudio:
             mfcc = (mfcc - mfcc_mean) / (mfcc_std + 1e-8)
         return mfcc.T
     
-    
     def extract_audio_info(self, file_path):
         try:
             # Load the audio file

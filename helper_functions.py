@@ -41,6 +41,7 @@ def plot_result(y_actual, y_pred, processed_predictions=None, additional=None, p
     #     fig.colorbar(img, ax=axs[2], format='%+2.0f dB')
     #     axs[2].set_xlabel("Time")
     #     axs[2].set_ylabel("Frequency (Hz)")
+
     axs[2].plot(additional, label="Smoothed", color="blue", alpha=0.5)
     if processed_predictions is not None:
         axs[2].plot(processed_predictions, label="Outputs", color="red", linestyle='--', alpha=0.5)
@@ -85,11 +86,11 @@ def split_file(X, y, batch_size=10000, shuffle=False):
             X_batches.append(X[j][i:i + batch_size])
             y_batches.append(y[j][i:i + batch_size])
         
-        # # remainder batch
-        # if (len(X[j])-1) % batch_size != 0 and len(X[j]) % batch_size != 0:
-        #     X_batches.append(X[j][len(X[j]) - len(X[j]) % batch_size:])
-        #     y_batches.append(y[j][len(y[j]) - len(y[j]) % batch_size:])
-        #     print("Remainder batch added of length: ", len(X[j]) % batch_size)
+        # remainder batch
+        remainder_length = len(X[j]) % batch_size
+        if remainder_length > 1:
+            X_batches.append(X[j][len(X[j]) - len(X[j]) % batch_size:])
+            y_batches.append(y[j][len(y[j]) - len(y[j]) % batch_size:])
             
     if shuffle:
         zipped = list(zip(X_batches, y_batches))
@@ -113,11 +114,15 @@ def check_gradients(asd_model):
                 print(f"Warning: Vanishing gradient detected in {name}")
                 
 def smooth_outputs(smooth_preds, avg_frames=5, criteria=None):
-    unfolded = smooth_preds.unfold(dimension=1, size=avg_frames, step=1).mean(dim=-1)
-    smooth_preds[:, :-(avg_frames-1)] = unfolded
-    smooth_preds[:, -(avg_frames-1):] = smooth_preds[:, -avg_frames:].mean(dim=1, keepdim=True)
+    unfolded = smooth_preds.unfold(0, avg_frames, 1).mean(dim=-1)
+    smooth_preds[:-(avg_frames-1)] = unfolded
+    smooth_preds[-(avg_frames-1):] = smooth_preds[-avg_frames:].mean()
     if criteria is not None:
         smooth_preds = (smooth_preds >= criteria).float()
+    # for i in range(smooth_preds.size(0)-avg_frames):
+    #     smooth_preds[i] = smooth_preds[i:i+avg_frames].mean()
+    #     smooth_preds[-avg_frames:] = smooth_preds[-avg_frames-1] # TODO: reconsider
+    #     smooth_preds = (smooth_preds >= 0.5).float()
     return smooth_preds
 
 def smooth_outputs_rnn(smooth_preds, avg_frames=5, criteria=None):

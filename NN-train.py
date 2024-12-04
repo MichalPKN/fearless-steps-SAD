@@ -53,7 +53,7 @@ X_loaded, audio_info, Y_loaded = data_loader.load_all(train_path, train_labels)
 
 # train test split
 print(f"num of data: {len(X_loaded)}")
-dev_idxs = [1] if debug else [5, 27, 43, 68, 91, 112]
+dev_idxs = [1] if debug else [5, 19, 27, 43, 68, 91, 104, 129]
 X_dev_loaded = [X_loaded[i] for i in dev_idxs]
 Y_dev_loaded = [Y_loaded[i] for i in dev_idxs]
 X_loaded = [X_loaded[i] for i in range(len(X_loaded)) if i not in dev_idxs]
@@ -78,7 +78,7 @@ for f_test in range(3):
 
         # train test split
         print(f"num of data: {len(X_loaded)}")
-        dev_idxs = [1] if debug else [5, 27, 43, 68, 91, 112]
+        dev_idxs = [1] if debug else [5, 18, 27, 43, 68, 91, 112, 129]
         X_dev_loaded = [X_loaded[i] for i in dev_idxs]
         Y_dev_loaded = [Y_loaded[i] for i in dev_idxs]
         X_loaded = [X_loaded[i] for i in range(len(X_loaded)) if i not in dev_idxs]
@@ -291,16 +291,17 @@ for f_test in range(3):
                         fn_time += ((preds == 0) & (batch_y == 1)).sum().item()
                         y_speech_time += (batch_y).sum().item()
                         y_nonspeech_time += ((batch_y == 0)).sum().item()
-                        if i == 0:
-                            toshow_y = batch_y
-                            toshow_preds = preds
-                            toshow_outputs = outputs
-                            toshow_additional = val_info[3][i]
                             
                         # smoothing:
                         smooth_preds = smooth_outputs(preds, avg_frames=5)
                         fp_time_smooth += ((smooth_preds == 1) & (batch_y == 0)).sum().item()
                         fn_time_smooth += ((smooth_preds == 0) & (batch_y == 1)).sum().item()
+                        
+                        if i == 0:
+                            toshow_y = batch_y
+                            toshow_preds = preds
+                            toshow_outputs = outputs
+                            toshow_additional = smooth_preds[3][i]
                     dev_accuracy = correct_predictions / total_predictions
                     pfp = fp_time / y_nonspeech_time # false alarm
                     pfn = fn_time / y_speech_time # miss
