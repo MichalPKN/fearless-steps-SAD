@@ -20,8 +20,8 @@ class LoadAudio:
         for i, filename in enumerate(sorted(os.listdir(audio_dir))):
             if filename.endswith(".wav"):
                 file_path = os.path.join(audio_dir, filename)
-                audio_data, sample_rate = librosa.load(file_path, sr=None)
-                audio_info[3].append([filename, audio_data, sample_rate])
+                #audio_data, sample_rate = librosa.load(file_path, sr=None)
+                #audio_info[3].append([filename, audio_data, sample_rate])
                 features = self.extract_features(file_path)
                 #audio_info = self.extract_audio_info(file_path)
                 if features is not None:

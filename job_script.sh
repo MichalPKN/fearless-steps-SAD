@@ -16,7 +16,7 @@ nvidia-smi
 echo $CUDA_VISIBLE_DEVICES
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 echo "cuda checked"
-> $DATADIR/print_outputs_new.log
-python3 -u __init__.py --datadir $SCRATCHDIR >> $DATADIR/o_NN1.log
+> $DATADIR/print_outputs_rnn.log
+python3 -u __init__.py --datadir $SCRATCHDIR >> $DATADIR/o_rnn_1.log
 cp -R outs $DATADIR/outs/$JOID
 clean_scratch
