@@ -42,7 +42,8 @@ def plot_result(y_actual, y_pred, processed_predictions=None, additional=None, p
     #     axs[2].set_xlabel("Time")
     #     axs[2].set_ylabel("Frequency (Hz)")
 
-    axs[2].plot(additional, label="Smoothed", color="blue", alpha=0.5)
+    if additional is not None:
+        axs[2].plot(additional, label="Smoothed", color="blue", alpha=0.5)
     if processed_predictions is not None:
         axs[2].plot(processed_predictions, label="Outputs", color="red", linestyle='--', alpha=0.5)
     axs[2].set_ylabel("Predictions")

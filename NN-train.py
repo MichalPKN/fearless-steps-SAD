@@ -53,7 +53,7 @@ X_loaded, audio_info, Y_loaded = data_loader.load_all(train_path, train_labels)
 
 # train test split
 print(f"num of data: {len(X_loaded)}")
-dev_idxs = [1] if debug else [5, 19, 27, 43, 68, 91, 104, 129]
+dev_idxs = [1] if debug else [5, 18, 27, 43, 68, 91, 112, 129]
 X_dev_loaded = [X_loaded[i] for i in dev_idxs]
 Y_dev_loaded = [Y_loaded[i] for i in dev_idxs]
 X_loaded = [X_loaded[i] for i in range(len(X_loaded)) if i not in dev_idxs]
@@ -67,7 +67,7 @@ print(f"num of eval data: {len(X_val_loaded)}")
 test_num = 1
 X_loaded = X_loaded[:1000] if debug else X_loaded
 Y_loaded = Y_loaded[:1000] if debug else Y_loaded
-for f_test in range(3):
+for f_test in range(4):
     if f_test == 3:
         print("-----------------")
         print("No mfcc norm test")
@@ -88,7 +88,7 @@ for f_test in range(3):
         # eval data
         X_val_loaded, val_info, Y_val_loaded = data_loader.load_all(dev_path, dev_labels)
         print(f"num of eval data: {len(X_val_loaded)}")
-    for batch_size in [50]:
+    for batch_size in [40]:
         if f_test == 2:
             print("-----------------")
             print("No shuffle test")

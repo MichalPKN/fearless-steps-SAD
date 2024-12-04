@@ -56,7 +56,7 @@ X_loaded, audio_info, Y_loaded = data_loader.load_all(train_path, train_labels)
 
 # train test split
 print(f"num of data: {len(X_loaded)}")
-dev_idxs = [1] if debug else [5, 27, 43, 68, 91, 112]
+dev_idxs = [1] if debug else [5, 18, 27, 43, 68, 91, 112, 129]
 X_dev_loaded = [X_loaded[i] for i in dev_idxs]
 Y_dev_loaded = [Y_loaded[i] for i in dev_idxs]
 X_loaded = [X_loaded[i] for i in range(len(X_loaded)) if i not in dev_idxs]
