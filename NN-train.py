@@ -301,7 +301,7 @@ for f_test in range(4):
                             toshow_y = batch_y
                             toshow_preds = preds
                             toshow_outputs = outputs
-                            toshow_additional = smooth_preds[3][i]
+                            toshow_additional = smooth_preds
                     dev_accuracy = correct_predictions / total_predictions
                     pfp = fp_time / y_nonspeech_time # false alarm
                     pfn = fn_time / y_speech_time # miss
@@ -323,7 +323,7 @@ for f_test in range(4):
                     path = "/storage/brno2/home/miapp/fearless-steps-SAD/fearless-steps-SAD/plots"
                 
                 #TODO: [30000:60000] remove/alter
-                plot_result(toshow_y.cpu().numpy()[30000:60000], toshow_preds.cpu().numpy()[30000:60000], toshow_outputs.cpu().detach().numpy()[30000:60000], toshow_additional, \
+                plot_result(toshow_y.cpu().numpy()[30000:60000], toshow_preds.cpu().numpy()[30000:60000], toshow_outputs.cpu().detach().numpy()[30000:60000], toshow_additional.cpu().detach().numpy()[30000:60000], \
                             path=path, file_name="sad_prediction_comparison_hp_" + str(test_num) + ".png", debug=False, \
                             title=f"batch_size: {batch_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
                 test_num += 1
