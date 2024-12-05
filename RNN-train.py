@@ -309,9 +309,9 @@ for f_test in range(2):
                 print(f"Training completed in {training_time:.2f} seconds, {training_time/60:.2f} minutes")
                 print(f"losses: {losses}")
                 if debug:
-                    path = os.path.join(datadir_path, "plots")
+                    path = os.path.join(datadir_path, "plots_rnn")
                 else:
-                    path = "/storage/brno2/home/miapp/fearless-steps-SAD/fearless-steps-SAD/plots"
+                    path = "/storage/brno2/home/miapp/fearless-steps-SAD/fearless-steps-SAD/plots_rnn"
                 
                 plot_result(toshow_y.cpu().numpy(), toshow_preds.cpu().numpy(), toshow_outputs.cpu().detach().numpy(), toshow_additional, \
                             path=path, file_name="sad_prediction_comparison_hp_" + str(test_num) + ".png", debug=False, \
