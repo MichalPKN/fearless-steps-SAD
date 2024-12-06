@@ -40,7 +40,7 @@ print("CUDA device count:", torch.cuda.device_count())
 # hyperparameters
 input_size = 30
 hidden_size = [1024, 512]
-epochs = 3 if debug else 35
+epochs = 3 if debug else 28
 # batch_size = 1
 criteria = 0.5
 # learning_rate = 0.001
@@ -70,8 +70,8 @@ print(f"num of eval data: {len(X_val_loaded)}")
 
 # training
 test_num = 1
-for f_test in range(2):
-    for batch_size in [10]:
+for f_test in range(1):
+    for batch_size, audio_size in [[1, 10000000], [2, 10000000], [2, 100000], [10, 1000], [30, 1000], [30, 10000], [30, 100]]:
         X, Y = split_file(X_loaded, Y_loaded, batch_size=audio_size, shuffle=False)
         dataset = SADDataset(X, Y) 
         print(f"max size: {dataset.max_len}")
