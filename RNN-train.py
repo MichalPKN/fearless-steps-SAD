@@ -53,6 +53,8 @@ data_loader = load.LoadAudio(debug=debug, input_size=input_size, frame_length=fr
 
 # train data
 X_loaded, audio_info, Y_loaded = data_loader.load_all(train_path, train_labels)
+X_loaded = X_loaded[:20000] if debug else X_loaded
+Y_loaded = Y_loaded[:20000] if debug else Y_loaded
 
 # train test split
 print(f"num of data: {len(X_loaded)}")
@@ -65,13 +67,15 @@ print(f"num of trainig data: {len(X_loaded)}, num of dev data: {len(X_dev_loaded
 
 # eval data
 X_val_loaded, val_info, Y_val_loaded = data_loader.load_all(dev_path, dev_labels)
+X_val_loaded = X_val_loaded[:20000] if debug else X_val_loaded
+Y_val_loaded = Y_val_loaded[:20000] if debug else Y_val_loaded
 print(f"num of eval data: {len(X_val_loaded)}")
 
 
 # training
 test_num = 1
 for f_test in range(1):
-    for batch_size, audio_size in [[1, 10000000], [2, 10000000], [2, 100000], [10, 1000], [30, 1000], [30, 10000], [30, 100]]:
+    for batch_size, audio_size in [[1, 10000000], [2, 10000000], [2, 100000], [10, 10000], [10, 1000], [30, 1000], [30, 10000], [40, 100]]:
         X, Y = split_file(X_loaded, Y_loaded, batch_size=audio_size, shuffle=False)
         dataset = SADDataset(X, Y) 
         print(f"max size: {dataset.max_len}")
@@ -102,11 +106,11 @@ for f_test in range(1):
                     print("-----------------")
                     print("No weight test")
                     print("-----------------")
-                    criterion = torch.nn.BCEWithLogitsLoss()
+                    criterion = torch.nn.BCEWithLogitsLoss(reduction='none')
                 else:
                     pos_weight = torch.tensor(audio_info[1] / audio_info[0]).to(device)
                     print("pos_weight: ", pos_weight)
-                    criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+                    criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight, reduction='none')
                 
                 optimizer = torch.optim.Adam(sad_model.parameters(), lr=learning_rate)
 
@@ -129,7 +133,7 @@ for f_test in range(1):
                     y_nonspeech_time = 0
                     i = 0
                     for batch_x, batch_y, mask in dataloader:
-                        batch_x, batch_y = batch_x.to(device), batch_y.to(device)
+                        batch_x, batch_y, mask = batch_x.to(device), batch_y.to(device), mask.to(device)
                         
                         
                         optimizer.zero_grad()
@@ -137,21 +141,20 @@ for f_test in range(1):
                         # Forward
                         outputs = sad_model(batch_x)
                         #print(outputs.mean())
-                        loss = criterion(outputs, batch_y)
+                        raw_loss = criterion(outputs, batch_y)
+                        loss = (raw_loss * mask).mean()
                         
                         loss.backward()
                         optimizer.step()
                         
                         outputs = torch.sigmoid(outputs)
-                        
                         preds = (outputs >= criteria).float()
-                        correct_predictions += ((preds == batch_y).float()).sum().item()
-                        total_predictions += batch_y.numel()
-
-                        fp_time += ((preds == 1) & (batch_y == 0)).sum().item()
-                        fn_time += ((preds == 0) & (batch_y == 1)).sum().item()
-                        y_speech_time += (batch_y).sum().item()
-                        y_nonspeech_time += ((batch_y == 0)).sum().item()
+                        correct_predictions += ((preds == batch_y).float() * mask).sum().item()
+                        total_predictions += mask.sum().item()
+                        fp_time += (((preds == 1) & (batch_y == 0)) * mask).sum().item()
+                        fn_time += (((preds == 0) & (batch_y == 1)) * mask).sum().item()
+                        y_speech_time += (batch_y * mask).sum().item()
+                        y_nonspeech_time += ((batch_y == 0) * mask).sum().item()
                         
                         ## checking explosing gradients
                         # if epoch % 2 == 0 and i == 0:  # Check gradients for the first batch every 2 epochs
@@ -163,14 +166,14 @@ for f_test in range(1):
                         ## debug:
                         # if epoch == 0 and (i < 20 or (i > 150 and i < 170)):
                             # print(f"i: {i}, Loss: {running_loss/(i+1):.4f}, running_loss: {running_loss:.4f}")
-                        if epoch == 0 and i % (len(X) // 10) == 0:
-                            train_accuracy = correct_predictions / total_predictions
-                            pfp = fp_time / (y_nonspeech_time + 0.0001) # false alarm
-                            pfn = fn_time / (y_speech_time + 0.0001) # miss
-                            dcf = 0.75 * pfn + 0.25 * pfp
-                            print(f'first epoch, Loss: {loss:.4f}, Accuracy: {train_accuracy*100:.2f}, DCF: {dcf*100:.2f}')
-                            print("size:", len(preds), "fp_time:", preds.sum(), "ones actual:", batch_y.sum(), "mean:", outputs.mean())
-                            print("-----------------------------")
+                        # if epoch == 0 and i % (len(X) // 10) == 0:
+                        #     train_accuracy = correct_predictions / total_predictions
+                        #     pfp = fp_time / (y_nonspeech_time + 0.0001) # false alarm
+                        #     pfn = fn_time / (y_speech_time + 0.0001) # miss
+                        #     dcf = 0.75 * pfn + 0.25 * pfp
+                        #     print(f'first epoch, Loss: {loss:.4f}, Accuracy: {train_accuracy*100:.2f}, DCF: {dcf*100:.2f}')
+                        #     print("size:", len(preds), "fp_time:", preds.sum(), "ones actual:", batch_y.sum(), "mean:", outputs.mean())
+                        #     print("-----------------------------")
                         i += 1
                     train_accuracy = correct_predictions / total_predictions
                     pfp = fp_time / y_nonspeech_time # false alarm
@@ -194,16 +197,16 @@ for f_test in range(1):
                         fn_time_smooth = [0 for asd in range(len(smooth_window))]
                         i = 0
                         for batch_x, batch_y, mask in dataloader_dev:
-                            batch_x, batch_y = batch_x.to(device), batch_y.to(device)
+                            batch_x, batch_y, mask  = batch_x.to(device), batch_y.to(device), mask.to(device)
                             outputs = sad_model(batch_x)
                             outputs = torch.sigmoid(outputs)
                             preds = (outputs >= criteria).float()
-                            correct_predictions += ((preds == batch_y).float()).sum().item()
-                            total_predictions += batch_y.numel()
-                            fp_time += ((preds == 1) & (batch_y == 0)).sum().item()
-                            fn_time += ((preds == 0) & (batch_y == 1)).sum().item()
-                            y_speech_time += (batch_y).sum().item()
-                            y_nonspeech_time += ((batch_y == 0)).sum().item()
+                            correct_predictions += ((preds == batch_y).float() * mask).sum().item()
+                            total_predictions += mask.sum().item()
+                            fp_time += (((preds == 1) & (batch_y == 0)) * mask).sum().item()
+                            fn_time += (((preds == 0) & (batch_y == 1)) * mask).sum().item()
+                            y_speech_time += (batch_y * mask).sum().item()
+                            y_nonspeech_time += ((batch_y == 0) * mask).sum().item()
                                                             
                             
                             # smoothing:
@@ -260,16 +263,16 @@ for f_test in range(1):
                     fn_time_smooth = 0
                     i = 0
                     for batch_x, batch_y, mask in dataloader_val:
-                        batch_x, batch_y = batch_x.to(device), batch_y.to(device)
+                        batch_x, batch_y, mask = batch_x.to(device), batch_y.to(device), mask.to(device)
                         outputs = sad_model(batch_x)
                         outputs = torch.sigmoid(outputs)
                         preds = (outputs >= criteria).float()
-                        correct_predictions += ((preds == batch_y).float()).sum().item()
-                        total_predictions += batch_y.numel()
-                        fp_time += ((preds == 1) & (batch_y == 0)).sum().item()
-                        fn_time += ((preds == 0) & (batch_y == 1)).sum().item()
-                        y_speech_time += (batch_y).sum().item()
-                        y_nonspeech_time += ((batch_y == 0)).sum().item()
+                        correct_predictions += ((preds == batch_y).float() * mask).sum().item()
+                        total_predictions += mask.sum().item()
+                        fp_time += (((preds == 1) & (batch_y == 0)) * mask).sum().item()
+                        fn_time += (((preds == 0) & (batch_y == 1)) * mask).sum().item()
+                        y_speech_time += (batch_y * mask).sum().item()
+                        y_nonspeech_time += ((batch_y == 0) * mask).sum().item()
                         
                         # smoothing:
                         smooth_preds = smooth_outputs_rnn(preds, avg_frames=best_smooth_window, criteria=criteria)
@@ -302,6 +305,7 @@ for f_test in range(1):
                     dev_dcf_smooth = 0.75 * pfn_smooth + 0.25 * pfp_smooth
                     
                     print(f'Validation Accuracy: {dev_accuracy*100:.2f}, Validation DCF: {dcf*100:.4f}, Validation DCF smooth {best_smooth_window}: {dev_dcf_smooth*100:.4f}')
+                    print()
                     
                     
                 print("finished training model")
@@ -313,7 +317,7 @@ for f_test in range(1):
                 else:
                     path = "/storage/brno2/home/miapp/fearless-steps-SAD/fearless-steps-SAD/plots_rnn"
                 
-                plot_result(toshow_y.cpu().numpy(), toshow_preds.cpu().numpy(), toshow_outputs.cpu().detach().numpy(), toshow_additional, \
+                plot_result(toshow_y.cpu().numpy(), toshow_preds.cpu().numpy(), toshow_outputs.cpu().detach().numpy(), toshow_additional.cpu().detach().numpy(), \
                             path=path, file_name="sad_prediction_comparison_hp_" + str(test_num) + ".png", debug=False, \
                             title=f"batch_size: {batch_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
                 test_num += 1
