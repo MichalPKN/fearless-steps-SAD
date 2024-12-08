@@ -75,7 +75,7 @@ print(f"num of eval data: {len(X_val_loaded)}")
 # training
 test_num = 1
 for f_test in range(1):
-    for batch_size, audio_size in [[1, 10000000], [2, 10000000], [2, 100000], [10, 10000], [10, 1000], [30, 1000], [30, 10000], [40, 100]]:
+    for batch_size, audio_size in [[40, 100], [1, 10000000], [2, 10000000], [2, 100000]]:
         X, Y = split_file(X_loaded, Y_loaded, batch_size=audio_size, shuffle=False)
         dataset = SADDataset(X, Y) 
         print(f"max size: {dataset.max_len}")
@@ -135,6 +135,9 @@ for f_test in range(1):
                     for batch_x, batch_y, mask in dataloader:
                         batch_x, batch_y, mask = batch_x.to(device), batch_y.to(device), mask.to(device)
                         
+                        if not batch_x.is_contiguous():
+                            print("not contiguous")
+                            batch_x = batch_x.contiguous()
                         
                         optimizer.zero_grad()
                         
@@ -186,7 +189,7 @@ for f_test in range(1):
                     # dev
                     sad_model.eval()
                     with torch.no_grad():
-                        smooth_window = [5, 15, 50, 150]
+                        smooth_window = [3, 5, 8, 10]
                         correct_predictions = 0
                         total_predictions = 0
                         fp_time = 0

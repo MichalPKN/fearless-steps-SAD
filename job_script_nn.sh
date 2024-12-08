@@ -13,7 +13,7 @@ ls -R $SCRATCHDIR > $DATADIR/debugprint
 cd $SCRATCHDIR
 echo "cuda exists?:"
 module add cuda/
-nvidia-smi
+nvidia-smi > $LOGFILE
 echo $CUDA_VISIBLE_DEVICES
 $CUDA_VISIBLE_DEVICES > $LOGFILE
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
