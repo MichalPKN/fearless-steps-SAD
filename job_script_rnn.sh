@@ -1,10 +1,10 @@
 #!/bin/bash
 #PBS -q gpu@pbs-m1.metacentrum.cz
 #PBS -l walltime=12:0:0
-#PBS -l select=1:ncpus=1:ngpus=1:mem=32gb:scratch_ssd=50gb:cuda_version=12.6
+#PBS -l select=1:ncpus=1:ngpus=1:mem=40gb:scratch_ssd=50gb:cuda_version=12.6
 #PBS -N Training_rnn
 DATADIR=/storage/brno2/home/miapp/fearless-steps-SAD/fearless-steps-SAD
-LOGFILE=$DATADIR/o_rnn_3.log
+LOGFILE=$DATADIR/o_rnn_5.log
 chmod 700 $SCRATCHDIR
 cp -r $DATADIR/* $SCRATCHDIR
 module add mambaforge
@@ -14,7 +14,7 @@ cd $SCRATCHDIR
 echo "cuda exists?:"
 module add cuda/
 nvidia-smi > $LOGFILE
-echo $CUDA_VISIBLE_DEVICES
+echo $CUDA_VISIBLE_DEVICES > $LOGFILE
 $CUDA_VISIBLE_DEVICES > $LOGFILE
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 echo "cuda checked"

@@ -75,10 +75,12 @@ print(f"num of eval data: {len(X_val_loaded)}")
 # training
 test_num = 1
 for f_test in range(1):
-    for batch_size, audio_size in [[40, 100], [1, 10000000], [2, 10000000], [2, 100000]]:
+    for batch_size, audio_size in [[1, 10000000], [2, 10000000], [2, 100000]]: # [[40, 100], [1, 10000000], [2, 10000000], [2, 100000]]
         X, Y = split_file(X_loaded, Y_loaded, batch_size=audio_size, shuffle=False)
         dataset = SADDataset(X, Y) 
         print(f"max size: {dataset.max_len}")
+        print(f"X length: {len(X)}")
+        print(f"X[0] shape: {X[0].shape}")
         dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle_batches) # maybe shuffle True
 
         #X_dev, Y_dev = split_file(X_dev_loaded, Y_dev_loaded, batch_size=30000, shuffle=shuffle_batches)
