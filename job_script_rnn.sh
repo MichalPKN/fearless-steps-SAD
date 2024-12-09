@@ -14,8 +14,8 @@ cd $SCRATCHDIR
 echo "cuda exists?:"
 module add cuda/
 nvidia-smi > $LOGFILE
-echo $CUDA_VISIBLE_DEVICES > $LOGFILE
-$CUDA_VISIBLE_DEVICES > $LOGFILE
+echo $CUDA_VISIBLE_DEVICES >> $LOGFILE
+$CUDA_VISIBLE_DEVICES >> $LOGFILE
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 echo "cuda checked"
 python3 -u RNN-train.py --datadir $SCRATCHDIR >> $LOGFILE
