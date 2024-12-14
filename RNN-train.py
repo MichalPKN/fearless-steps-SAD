@@ -52,20 +52,20 @@ audio_size = 10000
 data_loader = load.LoadAudio(debug=debug, input_size=input_size, frame_length=frame_length)
 
 # train data
-X_loaded, audio_info, Y_loaded = data_loader.load_all(train_path, train_labels)
-X_loaded = X_loaded[:20000] if debug else X_loaded
-Y_loaded = Y_loaded[:20000] if debug else Y_loaded
+X_loaded_all, audio_info, Y_loaded_all = data_loader.load_all(train_path, train_labels)
+X_loaded_all = X_loaded_all[:20000] if debug else X_loaded_all
+Y_loaded_all = Y_loaded_all[:20000] if debug else Y_loaded_all
 
 # train test split
-print(f"num of data before train dev split: {len(X_loaded)}")
+print(f"num of data before train dev split: {len(X_loaded_all)}")
 #dev_idxs = [1] if debug else [5, 18, 27, 43, 68, 91, 112, 129]
 dev_idxs = [1] if debug else [0, 1, 2, 3, 4, 70, 71, 72, 73, 74, 104, 105, 106, 107]
-train_idxs = [i for i in range(len(X_loaded)) if i not in dev_idxs]
-X_dev_loaded = [X_loaded[i] for i in dev_idxs]
-Y_dev_loaded = [Y_loaded[i] for i in dev_idxs]
+train_idxs = [i for i in range(len(X_loaded_all)) if i not in dev_idxs]
+X_dev_loaded = [X_loaded_all[i] for i in dev_idxs]
+Y_dev_loaded = [Y_loaded_all[i] for i in dev_idxs]
 dev_files_info = [[audio_info[3][i] for i in dev_idxs], [audio_info[4][i] for i in dev_idxs]]
-X_loaded = [X_loaded[i] for i in train_idxs]
-Y_loaded = [Y_loaded[i] for i in train_idxs]
+X_loaded = [X_loaded_all[i] for i in train_idxs]
+Y_loaded = [Y_loaded_all[i] for i in train_idxs]
 train_files_info = [[audio_info[j][i] for i in train_idxs] for j in [3, 4]]
 print(f"dev data: {dev_idxs}")
 print(f"num of trainig data: {len(X_loaded)}, num of dev data: {len(X_dev_loaded)}")
@@ -80,15 +80,16 @@ for i in range(len(X_loaded)):
 
 # eval data
 X_val_loaded, val_info, Y_val_loaded = data_loader.load_all(dev_path, dev_labels)
-X_val_loaded = X_val_loaded[:20000] if debug else X_val_loaded
-Y_val_loaded = Y_val_loaded[:20000] if debug else Y_val_loaded
+X_val_loaded = X_val_loaded[:20830] if debug else X_val_loaded
+Y_val_loaded = Y_val_loaded[:20830] if debug else Y_val_loaded
 print(f"num of eval data: {len(X_val_loaded)}")
 
 
 # training
 test_num = 1
 for f_test in range(1):
-    for batch_size, audio_size in [[10, 4000]]# [[1, 10000000], [2, 10000000], [2, 100000]]: # [[40, 100], [1, 10000000], [2, 10000000], [2, 100000]]
+    for batch_size, audio_size in [[10, 4000]]: # [[1, 10000000], [2, 10000000], [2, 100000]]: # [[40, 100], [1, 10000000], [2, 10000000], [2, 100000]]
+        print(f"\nsplitting, padding, etc. all data to batch size {batch_size}, audio size {audio_size}")
         X, Y = split_file(X_loaded, Y_loaded, batch_size=audio_size, shuffle=False)
         dataset = SADDataset(X, Y) 
         print(f"max size: {dataset.max_len}")
@@ -99,12 +100,17 @@ for f_test in range(1):
         #X_dev, Y_dev = split_file(X_dev_loaded, Y_dev_loaded, batch_size=30000, shuffle=shuffle_batches)
         #X_dev, Y_dev = split_file(X_dev_loaded, Y_dev_loaded, batch_size=30000)
         
+        
         X_dev, Y_dev = split_file(X_dev_loaded, Y_dev_loaded, batch_size=audio_size, shuffle=False)
         dataset_dev = SADDataset(X_dev, Y_dev, max_len=dataset.max_len)
         dataloader_dev = DataLoader(dataset_dev, batch_size=1, shuffle=False)
+        print(f"X_dev length: {len(X_dev)}")
+        print(f"X_dev[0] shape: {X_dev[0].shape}")
         
         X_val, Y_val = split_file(X_val_loaded, Y_val_loaded, batch_size=audio_size, shuffle=False)
         dataset_val = SADDataset(X_val, Y_val, max_len=dataset.max_len)
+        print(f"X_val length: {len(X_val)}")
+        print(f"X_val[0] shape: {X_val[0].shape}")
         dataloader_val = DataLoader(dataset_val, batch_size=1, shuffle=False)
         
         for hidden_size in [512]:
