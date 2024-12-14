@@ -57,14 +57,26 @@ X_loaded = X_loaded[:20000] if debug else X_loaded
 Y_loaded = Y_loaded[:20000] if debug else Y_loaded
 
 # train test split
-print(f"num of data: {len(X_loaded)}")
+print(f"num of data before train dev split: {len(X_loaded)}")
 #dev_idxs = [1] if debug else [5, 18, 27, 43, 68, 91, 112, 129]
-dev_idxs = [1] if debug else [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+dev_idxs = [1] if debug else [0, 1, 2, 3, 4, 70, 71, 72, 73, 74, 104, 105, 106, 107]
+train_idxs = [i for i in range(len(X_loaded)) if i not in dev_idxs]
 X_dev_loaded = [X_loaded[i] for i in dev_idxs]
 Y_dev_loaded = [Y_loaded[i] for i in dev_idxs]
-X_loaded = [X_loaded[i] for i in range(len(X_loaded)) if i not in dev_idxs]
-Y_loaded = [Y_loaded[i] for i in range(len(Y_loaded)) if i not in dev_idxs]
+dev_files_info = [[audio_info[3][i] for i in dev_idxs], [audio_info[4][i] for i in dev_idxs]]
+X_loaded = [X_loaded[i] for i in train_idxs]
+Y_loaded = [Y_loaded[i] for i in train_idxs]
+train_files_info = [[audio_info[j][i] for i in train_idxs] for j in [3, 4]]
+print(f"dev data: {dev_idxs}")
 print(f"num of trainig data: {len(X_loaded)}, num of dev data: {len(X_dev_loaded)}")
+print("dev files:")
+for i in range(len(dev_idxs)):
+    print(f"{dev_files_info[0][i]}, {dev_files_info[1][i]}")
+print("train files:")
+for i in range(len(X_loaded)):
+    print(f"{train_files_info[0][i]}, {train_files_info[1][i]}")
+
+
 
 # eval data
 X_val_loaded, val_info, Y_val_loaded = data_loader.load_all(dev_path, dev_labels)
@@ -76,7 +88,7 @@ print(f"num of eval data: {len(X_val_loaded)}")
 # training
 test_num = 1
 for f_test in range(1):
-    for batch_size, audio_size in [[1, 10000000], [2, 10000000], [2, 100000]]: # [[40, 100], [1, 10000000], [2, 10000000], [2, 100000]]
+    for batch_size, audio_size in [[10, 4000]]# [[1, 10000000], [2, 10000000], [2, 100000]]: # [[40, 100], [1, 10000000], [2, 10000000], [2, 100000]]
         X, Y = split_file(X_loaded, Y_loaded, batch_size=audio_size, shuffle=False)
         dataset = SADDataset(X, Y) 
         print(f"max size: {dataset.max_len}")

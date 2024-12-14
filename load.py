@@ -14,14 +14,14 @@ class LoadAudio:
             raise ValueError(f"Audio directory {audio_dir} does not exist.")
         
         labels = []
-        audio_info = [0, 0, 0, []]
+        audio_info = [0, 0, 0, [], []]
         X = []
         print(f"Loading audio from {audio_dir}")
         for i, filename in enumerate(sorted(os.listdir(audio_dir))):
             if filename.endswith(".wav"):
                 file_path = os.path.join(audio_dir, filename)
                 #audio_data, sample_rate = librosa.load(file_path, sr=None)
-                #audio_info[3].append([filename, audio_data, sample_rate])
+                audio_info[3].append(filename)
                 features = self.extract_features(file_path)
                 #audio_info = self.extract_audio_info(file_path)
                 if features is not None:
@@ -38,6 +38,7 @@ class LoadAudio:
                 audio_info[0] += num_of_1s
                 audio_info[1] += num_of_0s
                 audio_info[2] += len(labels_f)
+                audio_info[4].append(filename)
                 if num_of_0s + num_of_1s != len(labels_f):
                     print(f"Error: num_of_0s + num_of_1s != len(labels_f) for {label_path}")
                     print(f"num_of_0s: {num_of_0s}, num_of_1s: {num_of_1s}, len(labels_f): {len(labels_f)}")
