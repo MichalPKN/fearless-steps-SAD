@@ -84,7 +84,6 @@ X_val_loaded = X_val_loaded[:20830] if debug else X_val_loaded
 Y_val_loaded = Y_val_loaded[:20830] if debug else Y_val_loaded
 print(f"num of eval data: {len(X_val_loaded)}")
 
-
 # training
 test_num = 1
 for f_test in range(1):
@@ -117,8 +116,14 @@ for f_test in range(1):
             for learning_rate in [0.0001]:
                 print(f"\n\nbatch_size: {batch_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
                 print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
+                
                 # model
                 sad_model = model_rnn.SADModel(input_size, hidden_size, num_layers).to(device)
+                # Print model's state_dict
+                print("Model's state_dict:")
+                for param_tensor in sad_model.state_dict():
+                    print(param_tensor, "\t", sad_model.state_dict()[param_tensor].size())
+                    
                 # weight
                 one_ratio = audio_info[0] / audio_info[2]
                 zero_ratio = audio_info[1] / audio_info[2]
@@ -134,6 +139,9 @@ for f_test in range(1):
                     criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight, reduction='none')
                 
                 optimizer = torch.optim.Adam(sad_model.parameters(), lr=learning_rate)
+                
+                best_val = 100
+                model_path = os.path.join(datadir_path, "models", f"model_rnn_{batch_size}-{audio_size}_{learning_rate}_{hidden_size}.pt")
 
                 # training
                 load_time = time.time() - start_time
@@ -236,8 +244,8 @@ for f_test in range(1):
                             # smoothing:
                             for window_idx, window in enumerate(smooth_window):
                                 smooth_preds = smooth_outputs_rnn(preds, avg_frames=window, criteria=criteria)
-                                fp_time_smooth[window_idx] += ((smooth_preds == 1) & (batch_y == 0)).sum().item()
-                                fn_time_smooth[window_idx] += ((smooth_preds == 0) & (batch_y == 1)).sum().item()
+                                fp_time_smooth[window_idx] += (((smooth_preds == 1) & (batch_y == 0)) * mask).sum().item()
+                                fn_time_smooth[window_idx] += (((smooth_preds == 0) & (batch_y == 1)) * mask).sum().item()
                             
                             # if i == 0:
                             #     toshow_y = batch_y[0]
@@ -260,6 +268,10 @@ for f_test in range(1):
                         pfn = fn_time / y_speech_time # miss
                         dev_dcf = 0.75 * pfn + 0.25 * pfp
                         
+                        if dev_dcf < best_val:
+                            best_val = dev_dcf
+                            torch.save(sad_model, model_path)
+                        
                         print(f'Dev Accuracy: {dev_accuracy*100:.2f}, Dev DCF: {dev_dcf*100:.4f}')
                         best_smooth_window_dcf = 101
                         for window_idx, window in enumerate(smooth_window):
@@ -274,8 +286,10 @@ for f_test in range(1):
                     
                 torch.cuda.empty_cache()
                 
+                best_model = torch.load(model_path)
+                
                 # eval
-                sad_model.eval()
+                best_model.eval()
                 with torch.no_grad():
                     correct_predictions = 0
                     total_predictions = 0
@@ -288,7 +302,7 @@ for f_test in range(1):
                     i = 0
                     for batch_x, batch_y, mask in dataloader_val:
                         batch_x, batch_y, mask = batch_x.to(device), batch_y.to(device), mask.to(device)
-                        outputs = sad_model(batch_x)
+                        outputs = best_model(batch_x)
                         outputs = torch.sigmoid(outputs)
                         preds = (outputs >= criteria).float()
                         correct_predictions += ((preds == batch_y).float() * mask).sum().item()
@@ -297,6 +311,63 @@ for f_test in range(1):
                         fn_time += (((preds == 0) & (batch_y == 1)) * mask).sum().item()
                         y_speech_time += (batch_y * mask).sum().item()
                         y_nonspeech_time += ((batch_y == 0) * mask).sum().item()
+                        
+                        # smoothing:
+                        smooth_preds = smooth_outputs_rnn(preds, avg_frames=best_smooth_window, criteria=criteria)
+                        fp_time_smooth += (((smooth_preds == 1) & (batch_y == 0)) * mask).sum().item()
+                        fn_time_smooth += (((smooth_preds == 0) & (batch_y == 1)) * mask).sum().item()
+                        
+                        if i == 0:
+                            toshow_y = batch_y[0]
+                            toshow_preds = preds[0]
+                            toshow_outputs = outputs[0]
+                            toshow_additional = smooth_preds[0]
+                        i += 1
+                    # for batch_x, batch_y, mask in dataloader_val:
+                    #     batch_x, batch_y, mask = batch_x.to(device), batch_y.to(device),    mask.to(device)
+                    #     outputs = sad_model(batch_x)
+                    #     preds = (outputs >= criteria).float()
+                    #     correct_predictions += ((preds == batch_y).float() * mask).sum().item()
+                    #     total_predictions += mask.sum().item()
+                    #     fp_time += (((preds == 1) & (batch_y == 0)) * mask).sum().item()
+                    #     fn_time += (((preds == 0) & (batch_y == 1)) * mask).sum().item()
+                    #     y_speech_time += (batch_y * mask).sum().item()
+                    #     y_nonspeech_time += ((batch_y == 0) * mask).sum().item()
+                    dev_accuracy = correct_predictions / total_predictions
+                    pfp = fp_time / y_nonspeech_time # false alarm
+                    pfn = fn_time / y_speech_time # miss
+                    dev_dcf = 0.75 * pfn + 0.25 * pfp
+
+                    pfp_smooth = fp_time_smooth / y_nonspeech_time # false alarm
+                    pfn_smooth = fn_time_smooth / y_speech_time # miss
+                    dev_dcf_smooth = 0.75 * pfn_smooth + 0.25 * pfp_smooth
+                    
+                    print(f'Validation Accuracy: {dev_accuracy*100:.2f}, Validation DCF: {dcf*100:.4f}, Validation DCF smooth {best_smooth_window}: {dev_dcf_smooth*100:.4f}')
+                    print()
+                
+                # eval without masking
+                best_model.eval()
+                with torch.no_grad():
+                    correct_predictions = 0
+                    total_predictions = 0
+                    fp_time = 0
+                    fn_time = 0
+                    y_speech_time = 0
+                    y_nonspeech_time = 0
+                    fp_time_smooth = 0
+                    fn_time_smooth = 0
+                    i = 0
+                    for batch_x, batch_y, mask in dataloader_val:
+                        batch_x, batch_y, mask = batch_x.to(device), batch_y.to(device), mask.to(device)
+                        outputs = best_model(batch_x)
+                        outputs = torch.sigmoid(outputs)
+                        preds = (outputs >= criteria).float()
+                        correct_predictions += ((preds == batch_y).float()).sum().item()
+                        total_predictions += batch_y.numel()
+                        fp_time += (((preds == 1) & (batch_y == 0))).sum().item()
+                        fn_time += (((preds == 0) & (batch_y == 1))).sum().item()
+                        y_speech_time += (batch_y).sum().item()
+                        y_nonspeech_time += ((batch_y == 0)).sum().item()
                         
                         # smoothing:
                         smooth_preds = smooth_outputs_rnn(preds, avg_frames=best_smooth_window, criteria=criteria)
@@ -328,7 +399,7 @@ for f_test in range(1):
                     pfn_smooth = fn_time_smooth / y_speech_time # miss
                     dev_dcf_smooth = 0.75 * pfn_smooth + 0.25 * pfp_smooth
                     
-                    print(f'Validation Accuracy: {dev_accuracy*100:.2f}, Validation DCF: {dcf*100:.4f}, Validation DCF smooth {best_smooth_window}: {dev_dcf_smooth*100:.4f}')
+                    print(f'Validation Accuracy without masking: {dev_accuracy*100:.2f}, Validation DCF: {dcf*100:.4f}, Validation DCF smooth {best_smooth_window}: {dev_dcf_smooth*100:.4f}')
                     print()
                     
                     
