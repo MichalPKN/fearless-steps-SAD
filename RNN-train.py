@@ -7,6 +7,7 @@ import numpy as np
 import os
 import argparse
 import time
+import gc
 from helper_functions import plot_result, SADDataset, split_file, check_gradients, smooth_outputs_rnn
 
 import torch
@@ -53,13 +54,14 @@ data_loader = load.LoadAudio(debug=debug, input_size=input_size, frame_length=fr
 
 # train data
 X_loaded_all, audio_info, Y_loaded_all = data_loader.load_all(train_path, train_labels)
-X_loaded_all = X_loaded_all[:20000] if debug else X_loaded_all
-Y_loaded_all = Y_loaded_all[:20000] if debug else Y_loaded_all
+if debug:
+    X_loaded_all = [x[:20830] for x in X_loaded_all]
+    Y_loaded_all = [y[:20789] for y in Y_loaded_all]
 
 # train test split
 print(f"num of data before train dev split: {len(X_loaded_all)}")
 #dev_idxs = [1] if debug else [5, 18, 27, 43, 68, 91, 112, 129]
-dev_idxs = [1] if debug else [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+dev_idxs = [1] if debug else [5, 18, 27, 43, 68, 91, 112, 129]
 train_idxs = [i for i in range(len(X_loaded_all)) if i not in dev_idxs]
 X_dev_loaded = [X_loaded_all[i] for i in dev_idxs]
 Y_dev_loaded = [Y_loaded_all[i] for i in dev_idxs]
@@ -80,14 +82,18 @@ for i in range(len(X_loaded)):
 
 # eval data
 X_val_loaded, val_info, Y_val_loaded = data_loader.load_all(dev_path, dev_labels)
-X_val_loaded = X_val_loaded[:20830] if debug else X_val_loaded
-Y_val_loaded = Y_val_loaded[:20830] if debug else Y_val_loaded
+if debug:
+    X_val_loaded = [x[:20534] for x in X_val_loaded]
+    Y_val_loaded = [y[:20567] for y in Y_val_loaded]
 print(f"num of eval data: {len(X_val_loaded)}")
+
+del X_loaded_all, Y_loaded_all
+gc.collect()
 
 # training
 test_num = 1
 for f_test in range(1):
-    for batch_size, audio_size in [[10, 1000]]: # [[1, 10000000], [2, 10000000], [2, 100000]]: # [[40, 100], [1, 10000000], [2, 10000000], [2, 100000]]
+    for batch_size, audio_size in [[1, 10000000], [2, 100000], [5, 100000], [10, 10000], [30, 10000], [10, 1000], [30, 1000]]: #later try: [30, 100]
         print(f"\nsplitting, padding, etc. all data to batch size {batch_size}, audio size {audio_size}")
         X, Y = split_file(X_loaded, Y_loaded, batch_size=audio_size, shuffle=False)
         dataset = SADDataset(X, Y) 
@@ -107,7 +113,7 @@ for f_test in range(1):
         print(f"X_dev[0] shape: {X_dev[0].shape}")
         
         for hidden_size in [512]:
-            for learning_rate in [0.001]:
+            for learning_rate in [0.0001]:
                 print(f"\n\nbatch_size: {batch_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
                 print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
                 
@@ -233,6 +239,9 @@ for f_test in range(1):
                             fn_time += (((preds == 0) & (batch_y == 1)) * mask).sum().item()
                             y_speech_time += (batch_y * mask).sum().item()
                             y_nonspeech_time += ((batch_y == 0) * mask).sum().item()
+                            print(mask.shape)
+                            print(len(mask), mask.mean(), mask[0].sum())
+                            print(mask[len(mask)-1].sum())
                                                             
                             
                             # smoothing:
@@ -344,7 +353,7 @@ for f_test in range(1):
                     pfn_smooth = fn_time_smooth / y_speech_time # miss
                     dev_dcf_smooth = 0.75 * pfn_smooth + 0.25 * pfp_smooth
                     
-                    print(f'Validation Accuracy: {dev_accuracy*100:.2f}, Validation DCF: {dcf*100:.4f}, Validation DCF smooth {best_smooth_window}: {dev_dcf_smooth*100:.4f}')
+                    print(f'Validation Accuracy: {dev_accuracy*100:.2f}, Validation DCF: {dev_dcf*100:.4f}, Validation DCF smooth {best_smooth_window}: {dev_dcf_smooth*100:.4f}')
                     print()
                 
                 # eval without masking
@@ -401,7 +410,7 @@ for f_test in range(1):
                     pfn_smooth = fn_time_smooth / y_speech_time # miss
                     dev_dcf_smooth = 0.75 * pfn_smooth + 0.25 * pfp_smooth
                     
-                    print(f'Validation Accuracy without masking: {dev_accuracy*100:.2f}, Validation DCF: {dcf*100:.4f}, Validation DCF smooth {best_smooth_window}: {dev_dcf_smooth*100:.4f}')
+                    print(f'Validation Accuracy without masking: {dev_accuracy*100:.2f}, Validation DCF: {dev_dcf*100:.4f}, Validation DCF smooth {best_smooth_window}: {dev_dcf_smooth*100:.4f}')
                     print()
                     
                     
