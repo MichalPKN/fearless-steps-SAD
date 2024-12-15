@@ -125,19 +125,31 @@ def smooth_outputs(smooth_preds, avg_frames=5, criteria=None):
     # #     smooth_preds[-avg_frames:] = smooth_preds[-avg_frames-1] # TODO: reconsider
     # #     smooth_preds = (smooth_preds >= 0.5).float()
     # return smooth_preds
-
-    kernel = torch.ones(avg_frames) / avg_frames
-    kernel = kernel.to(smooth_preds.device)
-    smoothed = F.conv1d(smooth_preds.unsqueeze(1), kernel.view(1, 1, -1), padding=avg_frames // 2)
-    return smoothed.squeeze(1)
+    # smooth_preds = smooth_preds.transpose(1, 2)
+    # kernel = torch.ones(avg_frames) / avg_frames
+    # kernel = kernel.to(smooth_preds.device)
+    # smoothed = F.conv1d(smooth_preds.unsqueeze(1), kernel.view(1, 1, -1), padding=avg_frames // 2)
+    # smoothed = (smoothed >= criteria).float()
+    # return smoothed.squeeze(1)
+    pass
 
 def smooth_outputs_rnn(smooth_preds, avg_frames=5, criteria=None):
-    unfolded = smooth_preds.unfold(dimension=1, size=avg_frames, step=1).mean(dim=-1)
-    smooth_preds[:, :-(avg_frames-1)] = unfolded
-    smooth_preds[:, -(avg_frames-1):] = smooth_preds[:, -avg_frames:].mean(dim=1, keepdim=True)
-    if criteria is not None:
-        smooth_preds = (smooth_preds >= criteria).float()
-    return smooth_preds
+    
+    smooth_preds = smooth_preds.transpose(1, 2)
+    kernel = torch.ones(avg_frames) / avg_frames
+    kernel = kernel.to(smooth_preds.device)
+    smoothed = F.conv1d(smooth_preds, kernel.view(1, 1, -1), padding=avg_frames // 2)
+    if smoothed.size(2) > smooth_preds.size(2):
+        smoothed = smoothed[:, :, :-1]
+    smoothed = (smoothed >= criteria).float()
+    return smoothed.transpose(1, 2)
+    
+    # unfolded = smooth_preds.unfold(dimension=1, size=avg_frames, step=1).mean(dim=-1)
+    # smooth_preds[:, :-(avg_frames-1)] = unfolded
+    # smooth_preds[:, -(avg_frames-1):] = smooth_preds[:, -avg_frames:].mean(dim=1, keepdim=True)
+    # if criteria is not None:
+    #     smooth_preds = (smooth_preds >= criteria).float()
+    # return smooth_preds
 
 # def plot_result_plotly(y_actual, y_pred, processed_predictions=None, path="", file_name="sad_prediction_comparison.png", debug=False):    
 #     # Plotting in subplots

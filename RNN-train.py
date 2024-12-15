@@ -238,11 +238,7 @@ for f_test in range(1):
                             fp_time += (((preds == 1) & (batch_y == 0)) * mask).sum().item()
                             fn_time += (((preds == 0) & (batch_y == 1)) * mask).sum().item()
                             y_speech_time += (batch_y * mask).sum().item()
-                            y_nonspeech_time += ((batch_y == 0) * mask).sum().item()
-                            print(mask.shape)
-                            print(len(mask), mask.mean(), mask[0].sum())
-                            print(mask[len(mask)-1].sum())
-                                                            
+                            y_nonspeech_time += ((batch_y == 0) * mask).sum().item()                                                            
                             
                             # smoothing:
                             for window_idx, window in enumerate(smooth_window):
@@ -286,8 +282,6 @@ for f_test in range(1):
                                 best_smooth_window_dcf = dev_dcf_smooth
                                 best_smooth_window = window
                         print()
-                    
-                torch.cuda.empty_cache()
                 
                 print("\nVALIDATION")
                 
@@ -418,6 +412,12 @@ for f_test in range(1):
                 training_time = time.time() - start_time - load_time
                 print(f"Training completed in {training_time:.2f} seconds, {training_time/60:.2f} minutes, {training_time/3600:.2f} hours")
                 print(f"losses: {losses}")
+                
+                del sad_model, best_model, dataset, dataset_dev, dataset_val, dataloader, dataloader_dev, dataloader_val
+                del X, Y, X_dev, Y_dev, X_val, Y_val
+                torch.cuda.empty_cache()
+                gc.collect()
+                
                 if debug:
                     path = os.path.join(datadir_path, "plots_rnn")
                 else:
