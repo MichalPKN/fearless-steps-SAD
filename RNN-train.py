@@ -93,7 +93,7 @@ gc.collect()
 # training
 test_num = 1
 for f_test in range(1):
-    for batch_size, audio_size in [[1, 10000000], [2, 100000], [5, 100000], [10, 10000], [30, 10000], [10, 1000], [30, 1000]]: #later try: [30, 100]
+    for batch_size, audio_size in [[2, 100000], [5, 100000], [10, 10000], [30, 10000], [10, 1000], [30, 1000]]: #later try: [30, 100], [1, 10000000]
         print(f"\nsplitting, padding, etc. all data to batch size {batch_size}, audio size {audio_size}")
         X, Y = split_file(X_loaded, Y_loaded, batch_size=audio_size, shuffle=False)
         dataset = SADDataset(X, Y) 
