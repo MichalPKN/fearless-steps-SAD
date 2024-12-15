@@ -20,4 +20,5 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 echo "cuda checked"
 python3 -u RNN-train.py --datadir $SCRATCHDIR >> $LOGFILE
 #cp -R outs $DATADIR/outs/$JOID
+cp -R models $DATADIR/models
 clean_scratch
