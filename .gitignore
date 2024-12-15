@@ -5,6 +5,8 @@ FSC_P4_Streams/
 sad_prediction_comparison*
 backup*
 models/
+Training_*
+debugprint
 
 
 ## PyTorch

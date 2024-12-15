@@ -87,7 +87,7 @@ print(f"num of eval data: {len(X_val_loaded)}")
 # training
 test_num = 1
 for f_test in range(1):
-    for batch_size, audio_size in [[10, 4000]]: # [[1, 10000000], [2, 10000000], [2, 100000]]: # [[40, 100], [1, 10000000], [2, 10000000], [2, 100000]]
+    for batch_size, audio_size in [[10, 1000]]: # [[1, 10000000], [2, 10000000], [2, 100000]]: # [[40, 100], [1, 10000000], [2, 10000000], [2, 100000]]
         print(f"\nsplitting, padding, etc. all data to batch size {batch_size}, audio size {audio_size}")
         X, Y = split_file(X_loaded, Y_loaded, batch_size=audio_size, shuffle=False)
         dataset = SADDataset(X, Y) 
@@ -106,14 +106,8 @@ for f_test in range(1):
         print(f"X_dev length: {len(X_dev)}")
         print(f"X_dev[0] shape: {X_dev[0].shape}")
         
-        X_val, Y_val = split_file(X_val_loaded, Y_val_loaded, batch_size=audio_size, shuffle=False)
-        dataset_val = SADDataset(X_val, Y_val, max_len=dataset.max_len)
-        print(f"X_val length: {len(X_val)}")
-        print(f"X_val[0] shape: {X_val[0].shape}")
-        dataloader_val = DataLoader(dataset_val, batch_size=1, shuffle=False)
-        
         for hidden_size in [512]:
-            for learning_rate in [0.0001]:
+            for learning_rate in [0.001]:
                 print(f"\n\nbatch_size: {batch_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
                 print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
                 
@@ -213,7 +207,7 @@ for f_test in range(1):
                     dcf = 0.75 * pfn + 0.25 * pfp
                     losses[epoch] = running_loss/len(X)
                     print()
-                    print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/len(X):.4f}, Accuracy: {train_accuracy*100:.2f}, DCF: {dcf*100:.2f}")
+                    print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/len(X):.4f}, Accuracy: {train_accuracy*100:.2f}, DCF: {dcf*100:.4f}")
                     
                     # dev
                     sad_model.eval()
@@ -286,7 +280,15 @@ for f_test in range(1):
                     
                 torch.cuda.empty_cache()
                 
+                print("\nVALIDATION")
+                
                 best_model = torch.load(model_path)
+                
+                X_val, Y_val = split_file(X_val_loaded, Y_val_loaded, batch_size=audio_size, shuffle=False)
+                dataset_val = SADDataset(X_val, Y_val, max_len=dataset.max_len)
+                print(f"X_val length: {len(X_val)}")
+                print(f"X_val[0] shape: {X_val[0].shape}")
+                dataloader_val = DataLoader(dataset_val, batch_size=1, shuffle=False)
                 
                 # eval
                 best_model.eval()
@@ -405,7 +407,7 @@ for f_test in range(1):
                     
                 print("finished training model")
                 training_time = time.time() - start_time - load_time
-                print(f"Training completed in {training_time:.2f} seconds, {training_time/60:.2f} minutes")
+                print(f"Training completed in {training_time:.2f} seconds, {training_time/60:.2f} minutes, {training_time/3600:.2f} hours")
                 print(f"losses: {losses}")
                 if debug:
                     path = os.path.join(datadir_path, "plots_rnn")
