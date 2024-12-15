@@ -61,7 +61,7 @@ if debug:
 # train test split
 print(f"num of data before train dev split: {len(X_loaded_all)}")
 #dev_idxs = [1] if debug else [5, 18, 27, 43, 68, 91, 112, 129]
-dev_idxs = [1] if debug else [5, 18, 27, 43, 68, 91, 112, 129]
+dev_idxs = [1] if debug else [5, 12, 18, 27, 43, 56, 68, 91, 112, 129]
 train_idxs = [i for i in range(len(X_loaded_all)) if i not in dev_idxs]
 X_dev_loaded = [X_loaded_all[i] for i in dev_idxs]
 Y_dev_loaded = [Y_loaded_all[i] for i in dev_idxs]
