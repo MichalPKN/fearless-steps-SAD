@@ -2,7 +2,7 @@
 #PBS -q gpu@pbs-m1.metacentrum.cz
 #PBS -l walltime=23:0:0
 #PBS -l select=1:ncpus=1:ngpus=1:mem=40gb:scratch_ssd=50gb:cuda_version=12.6
-#PBS -N Training_rnn
+#PBS -N rnn_training
 DATADIR=/storage/brno2/home/miapp/fearless-steps-SAD/fearless-steps-SAD
 LOGFILE=$DATADIR/out_rnn_1.log
 chmod 700 $SCRATCHDIR
