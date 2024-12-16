@@ -74,9 +74,9 @@ print(f"num of trainig data: {len(X_loaded)}, num of dev data: {len(X_dev_loaded
 print("dev files:")
 for i in range(len(dev_idxs)):
     print(f"{dev_files_info[0][i]}, {dev_files_info[1][i]}")
-print("train files:")
-for i in range(len(X_loaded)):
-    print(f"{train_files_info[0][i]}, {train_files_info[1][i]}")
+# print("train files:")
+# for i in range(len(X_loaded)):
+#     print(f"{train_files_info[0][i]}, {train_files_info[1][i]}")
 
 
 
@@ -119,6 +119,9 @@ for f_test in range(1):
                 
                 # model
                 sad_model = model_rnn.SADModel(input_size, hidden_size, num_layers).to(device)
+                if torch.cuda.device_count() > 1:
+                    print(f"Using {torch.cuda.device_count()} GPUs")
+                    sad_model = torch.nn.DataParallel(sad_model)
                 # Print model's state_dict
                 print("Model's state_dict:")
                 for param_tensor in sad_model.state_dict():
