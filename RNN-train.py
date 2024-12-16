@@ -111,8 +111,8 @@ for f_test in range(1):
         dataloader_dev = DataLoader(dataset_dev, batch_size=1, shuffle=False)
         print(f"X_dev length: {len(X_dev)}")
         print(f"X_dev[0] shape: {X_dev[0].shape}")
-        for num_layers in [2]:
-            for hidden_size in [256, 512, 1024, 2048]:
+        for num_layers in [2, 4]:
+            for hidden_size in [256, 512, 1024]:
                 for learning_rate in [0.001, 0.0001, 0.00001]:
                     print(f"\n\nbatch_size: {batch_size}, sequence_size: {audio_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
                     print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
