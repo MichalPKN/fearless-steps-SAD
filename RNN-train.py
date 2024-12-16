@@ -221,7 +221,7 @@ for f_test in range(1):
                         # dev
                         sad_model.eval()
                         with torch.no_grad():
-                            smooth_window = [3, 5, 8, 10]
+                            smooth_window = [5, 10, 20, 40]
                             correct_predictions = 0
                             total_predictions = 0
                             fp_time = 0
