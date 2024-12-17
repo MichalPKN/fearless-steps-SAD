@@ -105,7 +105,7 @@ for f_test in range(1):
         #X_dev, Y_dev = split_file(X_dev_loaded, Y_dev_loaded, batch_size=30000, shuffle=shuffle_batches)
         #X_dev, Y_dev = split_file(X_dev_loaded, Y_dev_loaded, batch_size=30000)
         
-        
+                    
         X_dev, Y_dev = split_file(X_dev_loaded, Y_dev_loaded, batch_size=audio_size, shuffle=False)
         dataset_dev = SADDataset(X_dev, Y_dev, max_len=dataset.max_len)
         dataloader_dev = DataLoader(dataset_dev, batch_size=1, shuffle=False)
@@ -115,7 +115,7 @@ for f_test in range(1):
             for hidden_size in [256, 512, 1024]:
                 for learning_rate in [0.001, 0.0001, 0.00001]:
                     print(f"\n\nbatch_size: {batch_size}, sequence_size: {audio_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
-                    print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
+                    #print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
                     
                     # model
                     sad_model = model_rnn.SADModel(input_size, hidden_size, num_layers).to(device)
@@ -416,10 +416,7 @@ for f_test in range(1):
                     print(f"Training completed in {training_time:.2f} seconds, {training_time/60:.2f} minutes, {training_time/3600:.2f} hours")
                     print(f"losses: {losses}")
                     
-                    del sad_model, best_model, dataset, dataset_dev, dataset_val, dataloader, dataloader_dev, dataloader_val
-                    del X, Y, X_dev, Y_dev, X_val, Y_val
                     torch.cuda.empty_cache()
-                    gc.collect()
                     
                     if debug:
                         path = os.path.join(datadir_path, "plots_rnn")
@@ -431,6 +428,9 @@ for f_test in range(1):
                                 title=f"batch_size: {batch_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
                     test_num += 1
                     print("\n----------------------------------------\n\n\n")
+        del sad_model, best_model, dataset, dataset_dev, dataset_val, dataloader, dataloader_dev, dataloader_val
+        del X, Y, X_dev, Y_dev, X_val, Y_val
+        gc.collect()
 print(f"Total time: {time.time() - start_time:.2f} seconds, {training_time/60:.2f} minutes, {training_time/3600:.2f} hours")
 print("\n----------------------------------------\n\n\n")
             
