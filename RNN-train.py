@@ -1,7 +1,5 @@
 print("starting code")
 import load
-import model
-import model2l
 import model_rnn
 import numpy as np
 import os
@@ -100,17 +98,14 @@ for f_test in range(1):
         print(f"max size: {dataset.max_len}")
         print(f"X length: {len(X)}")
         print(f"X[0] shape: {X[0].shape}")
-        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle_batches) # maybe shuffle True
-
-        #X_dev, Y_dev = split_file(X_dev_loaded, Y_dev_loaded, batch_size=30000, shuffle=shuffle_batches)
-        #X_dev, Y_dev = split_file(X_dev_loaded, Y_dev_loaded, batch_size=30000)
-        
+        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle_batches) # maybe shuffle True        
                     
         X_dev, Y_dev = split_file(X_dev_loaded, Y_dev_loaded, batch_size=audio_size, shuffle=False)
         dataset_dev = SADDataset(X_dev, Y_dev, max_len=dataset.max_len)
         dataloader_dev = DataLoader(dataset_dev, batch_size=1, shuffle=False)
         print(f"X_dev length: {len(X_dev)}")
         print(f"X_dev[0] shape: {X_dev[0].shape}")
+        
         for num_layers in [2, 4]:
             for hidden_size in [256, 512, 1024]:
                 for learning_rate in [0.001, 0.0001, 0.00001]:
@@ -122,7 +117,6 @@ for f_test in range(1):
                     if torch.cuda.device_count() > 1:
                         print(f"Using {torch.cuda.device_count()} GPUs")
                         sad_model = torch.nn.DataParallel(sad_model)
-                    # Print model's state_dict
                     print("Model's state_dict:")
                     for param_tensor in sad_model.state_dict():
                         print(param_tensor, "\t", sad_model.state_dict()[param_tensor].size())
@@ -191,12 +185,6 @@ for f_test in range(1):
                             y_speech_time += (batch_y * mask).sum().item()
                             y_nonspeech_time += ((batch_y == 0) * mask).sum().item()
                             
-                            ## checking explosing gradients
-                            # if epoch % 2 == 0 and i == 0:  # Check gradients for the first batch every 2 epochs
-                            #     print(f"Epoch {epoch+1}, Batch {i}")
-                            #     check_gradients(sad_model)
-                            
-                            #print(fp_time, fn_time, y_speech_time, y_nonspeech_time)
                             running_loss += loss.item()
                             ## debug:
                             # if epoch == 0 and (i < 20 or (i > 150 and i < 170)):
@@ -230,7 +218,6 @@ for f_test in range(1):
                             y_nonspeech_time = 0
                             fp_time_smooth = [0 for asd in range(len(smooth_window))]
                             fn_time_smooth = [0 for asd in range(len(smooth_window))]
-                            i = 0
                             for batch_x, batch_y, mask in dataloader_dev:
                                 batch_x, batch_y, mask  = batch_x.to(device), batch_y.to(device), mask.to(device)
                                 outputs = sad_model(batch_x)
@@ -248,23 +235,6 @@ for f_test in range(1):
                                     smooth_preds = smooth_outputs_rnn(preds, avg_frames=window, criteria=criteria)
                                     fp_time_smooth[window_idx] += (((smooth_preds == 1) & (batch_y == 0)) * mask).sum().item()
                                     fn_time_smooth[window_idx] += (((smooth_preds == 0) & (batch_y == 1)) * mask).sum().item()
-                                
-                                # if i == 0:
-                                #     toshow_y = batch_y[0]
-                                #     toshow_preds = preds[0]
-                                #     toshow_outputs = outputs[0]
-                                #     toshow_additional = smooth_preds[0]
-                                i += 1
-                            # for batch_x, batch_y, mask in dataloader_dev:
-                            #     batch_x, batch_y, mask = batch_x.to(device), batch_y.to(device),    mask.to(device)
-                            #     outputs = sad_model(batch_x)
-                            #     preds = (outputs >= criteria).float()
-                            #     correct_predictions += ((preds == batch_y).float() * mask).sum().item()
-                            #     total_predictions += mask.sum().item()
-                            #     fp_time += (((preds == 1) & (batch_y == 0)) * mask).sum().item()
-                            #     fn_time += (((preds == 0) & (batch_y == 1)) * mask).sum().item()
-                            #     y_speech_time += (batch_y * mask).sum().item()
-                            #     y_nonspeech_time += ((batch_y == 0) * mask).sum().item()
                             dev_accuracy = correct_predictions / total_predictions
                             pfp = fp_time / y_nonspeech_time # false alarm
                             pfn = fn_time / y_speech_time # miss
@@ -325,22 +295,12 @@ for f_test in range(1):
                             fp_time_smooth += (((smooth_preds == 1) & (batch_y == 0)) * mask).sum().item()
                             fn_time_smooth += (((smooth_preds == 0) & (batch_y == 1)) * mask).sum().item()
                             
-                            if i == 0:
+                            if i == 5:
                                 toshow_y = batch_y[0]
                                 toshow_preds = preds[0]
                                 toshow_outputs = outputs[0]
                                 toshow_additional = smooth_preds[0]
                             i += 1
-                        # for batch_x, batch_y, mask in dataloader_val:
-                        #     batch_x, batch_y, mask = batch_x.to(device), batch_y.to(device),    mask.to(device)
-                        #     outputs = sad_model(batch_x)
-                        #     preds = (outputs >= criteria).float()
-                        #     correct_predictions += ((preds == batch_y).float() * mask).sum().item()
-                        #     total_predictions += mask.sum().item()
-                        #     fp_time += (((preds == 1) & (batch_y == 0)) * mask).sum().item()
-                        #     fn_time += (((preds == 0) & (batch_y == 1)) * mask).sum().item()
-                        #     y_speech_time += (batch_y * mask).sum().item()
-                        #     y_nonspeech_time += ((batch_y == 0) * mask).sum().item()
                         dev_accuracy = correct_predictions / total_predictions
                         pfp = fp_time / y_nonspeech_time # false alarm
                         pfn = fn_time / y_speech_time # miss
@@ -351,65 +311,7 @@ for f_test in range(1):
                         dev_dcf_smooth = 0.75 * pfn_smooth + 0.25 * pfp_smooth
                         
                         print(f'Validation Accuracy: {dev_accuracy*100:.2f}, Validation DCF: {dev_dcf*100:.4f}, Validation DCF smooth {best_smooth_window}: {dev_dcf_smooth*100:.4f}')
-                        print()
-                    
-                    # eval without masking
-                    best_model.eval()
-                    with torch.no_grad():
-                        correct_predictions = 0
-                        total_predictions = 0
-                        fp_time = 0
-                        fn_time = 0
-                        y_speech_time = 0
-                        y_nonspeech_time = 0
-                        fp_time_smooth = 0
-                        fn_time_smooth = 0
-                        i = 0
-                        for batch_x, batch_y, mask in dataloader_val:
-                            batch_x, batch_y, mask = batch_x.to(device), batch_y.to(device), mask.to(device)
-                            outputs = best_model(batch_x)
-                            outputs = torch.sigmoid(outputs)
-                            preds = (outputs >= criteria).float()
-                            correct_predictions += ((preds == batch_y).float()).sum().item()
-                            total_predictions += batch_y.numel()
-                            fp_time += (((preds == 1) & (batch_y == 0))).sum().item()
-                            fn_time += (((preds == 0) & (batch_y == 1))).sum().item()
-                            y_speech_time += (batch_y).sum().item()
-                            y_nonspeech_time += ((batch_y == 0)).sum().item()
-                            
-                            # smoothing:
-                            smooth_preds = smooth_outputs_rnn(preds, avg_frames=best_smooth_window, criteria=criteria)
-                            fp_time_smooth += ((smooth_preds == 1) & (batch_y == 0)).sum().item()
-                            fn_time_smooth += ((smooth_preds == 0) & (batch_y == 1)).sum().item()
-                            
-                            if i == 0:
-                                toshow_y = batch_y[0]
-                                toshow_preds = preds[0]
-                                toshow_outputs = outputs[0]
-                                toshow_additional = smooth_preds[0]
-                            i += 1
-                        # for batch_x, batch_y, mask in dataloader_val:
-                        #     batch_x, batch_y, mask = batch_x.to(device), batch_y.to(device),    mask.to(device)
-                        #     outputs = sad_model(batch_x)
-                        #     preds = (outputs >= criteria).float()
-                        #     correct_predictions += ((preds == batch_y).float() * mask).sum().item()
-                        #     total_predictions += mask.sum().item()
-                        #     fp_time += (((preds == 1) & (batch_y == 0)) * mask).sum().item()
-                        #     fn_time += (((preds == 0) & (batch_y == 1)) * mask).sum().item()
-                        #     y_speech_time += (batch_y * mask).sum().item()
-                        #     y_nonspeech_time += ((batch_y == 0) * mask).sum().item()
-                        dev_accuracy = correct_predictions / total_predictions
-                        pfp = fp_time / y_nonspeech_time # false alarm
-                        pfn = fn_time / y_speech_time # miss
-                        dev_dcf = 0.75 * pfn + 0.25 * pfp
-
-                        pfp_smooth = fp_time_smooth / y_nonspeech_time # false alarm
-                        pfn_smooth = fn_time_smooth / y_speech_time # miss
-                        dev_dcf_smooth = 0.75 * pfn_smooth + 0.25 * pfp_smooth
-                        
-                        print(f'Validation Accuracy without masking: {dev_accuracy*100:.2f}, Validation DCF: {dev_dcf*100:.4f}, Validation DCF smooth {best_smooth_window}: {dev_dcf_smooth*100:.4f}')
-                        print()
-                        
+                        print()                        
                         
                     print("finished training model")
                     training_time = time.time() - start_time - load_time
@@ -428,9 +330,11 @@ for f_test in range(1):
                                 title=f"batch_size: {batch_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
                     test_num += 1
                     print("\n----------------------------------------\n\n\n")
+                    
         del sad_model, best_model, dataset, dataset_dev, dataset_val, dataloader, dataloader_dev, dataloader_val
         del X, Y, X_dev, Y_dev, X_val, Y_val
         gc.collect()
+        
 print(f"Total time: {time.time() - start_time:.2f} seconds, {training_time/60:.2f} minutes, {training_time/3600:.2f} hours")
 print("\n----------------------------------------\n\n\n")
             
