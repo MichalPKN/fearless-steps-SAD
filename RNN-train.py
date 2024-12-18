@@ -94,7 +94,7 @@ gc.collect()
 # training
 test_num = 1
 for f_test in range(1):
-    for batch_size, audio_size in [[30, 100], [5, 10000], [1, 100000]]: #later try: [30, 100], [1, 10000000]
+    for batch_size, audio_size in [[10, 1000]]: #later try: [30, 100], [1, 10000000]
         print(f"\nsplitting, padding, etc. all data to batch size {batch_size}, audio size {audio_size}")
         X, Y = split_file(X_loaded, Y_loaded, batch_size=audio_size, shuffle=False)
         dataset = SADDataset(X, Y) 
@@ -109,9 +109,9 @@ for f_test in range(1):
         print(f"X_dev length: {len(X_dev)}")
         print(f"X_dev[0] shape: {X_dev[0].shape}")
         
-        for num_layers in [2]:#[2, 4]:
-            for hidden_size in [512]:#[256, 512, 1024]:
-                for learning_rate in [0.0001]: #[0.001, 0.0001, 0.00001]:
+        for num_layers in [4]:#[2, 4]:
+            for hidden_size in [256, 512, 1024]:#[256, 512, 1024]:
+                for learning_rate in [0.001, 0.0001, 0.00001]: #[0.001, 0.0001, 0.00001]:
                     print(f"\n\nbatch_size: {batch_size}, sequence_size: {audio_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
                     #print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
                     
