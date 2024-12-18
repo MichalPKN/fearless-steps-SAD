@@ -13,7 +13,7 @@ from torch.utils.data import Dataset, DataLoader
 from torch.nn import functional as F
 
 #turn to True later
-torch.backends.cudnn.enabled = False
+# torch.backends.cudnn.enabled = False
 
 start_time = time.time()
 
@@ -94,7 +94,7 @@ gc.collect()
 # training
 test_num = 1
 for f_test in range(1):
-    for batch_size, audio_size in [[2, 100000], [1, 100000], [1, 100000000], [30, 100]]: #later try: [30, 100], [1, 10000000]
+    for batch_size, audio_size in [[30, 100], [5, 10000], [1, 100000]]: #later try: [30, 100], [1, 10000000]
         print(f"\nsplitting, padding, etc. all data to batch size {batch_size}, audio size {audio_size}")
         X, Y = split_file(X_loaded, Y_loaded, batch_size=audio_size, shuffle=False)
         dataset = SADDataset(X, Y) 
