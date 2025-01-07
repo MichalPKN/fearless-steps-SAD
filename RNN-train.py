@@ -94,7 +94,7 @@ gc.collect()
 # training
 test_num = 1
 for f_test in range(1):
-    for batch_size, audio_size in [[10, 1000]]: #later try: [30, 100], [1, 10000000]
+    for batch_size, audio_size in [[10, 1000]]:
         print(f"\nsplitting, padding, etc. all data to batch size {batch_size}, audio size {audio_size}")
         X, Y = split_file(X_loaded, Y_loaded, batch_size=audio_size, shuffle=False)
         dataset = SADDataset(X, Y) 
@@ -109,10 +109,10 @@ for f_test in range(1):
         print(f"X_dev length: {len(X_dev)}")
         print(f"X_dev[0] shape: {X_dev[0].shape}")
         
-        for num_layers in [2]:#[2, 4]:
-            for hidden_size in [1024]:#[256, 512, 1024]:
-                for learning_rate in [0.001, 0.0001, 0.00001]: #[0.001, 0.0001, 0.00001]:
-                    print(f"\n\nbatch_size: {batch_size}, sequence_size: {audio_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
+        for num_layers in [4]:#[2, 4]:
+            for hidden_size in [256, 512, 1024]:
+                for learning_rate in [0.001, 0.0001]: #[0.001, 0.0001, 0.00001]:
+                    print(f"\n\nbatch_size: {batch_size}, sequence_size: {audio_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}, num_layers: {num_layers}")
                     #print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
                     
                     # model
@@ -243,6 +243,12 @@ for f_test in range(1):
                             pfn = fn_time / y_speech_time # miss
                             dev_dcf = 0.75 * pfn + 0.25 * pfp
                             
+                            
+                            if dev_dcf < best_val:
+                                best_val = dev_dcf
+                                torch.save(sad_model, model_path)
+                            
+
                             if dev_dcf < best_val:
                                 best_val = dev_dcf
                                 torch.save(sad_model, model_path)
@@ -256,9 +262,18 @@ for f_test in range(1):
                                 print(f'Dev DCF smooth {window}: {dev_dcf_smooth*100:.4f}', end=", ")
                                 if dev_dcf_smooth < best_smooth_window_dcf:
                                     best_smooth_window_dcf = dev_dcf_smooth
-                                    best_smooth_window = window
+                                    top_smooth_window = window
                             print()
                     
+                            if dev_dcf < best_val:
+                                best_val = dev_dcf
+                                dcf_train = dcf
+                                dcf_dev = dev_dcf
+                                dcf_dev_smooth = best_smooth_window_dcf
+                                best_smooth_window = top_smooth_window
+                                torch.save(sad_model, model_path)
+                                
+                                
                     print("\nVALIDATION")
                     
                     best_model = torch.load(model_path)
