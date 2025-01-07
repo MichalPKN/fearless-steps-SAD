@@ -243,16 +243,6 @@ for f_test in range(1):
                             pfn = fn_time / y_speech_time # miss
                             dev_dcf = 0.75 * pfn + 0.25 * pfp
                             
-                            
-                            if dev_dcf < best_val:
-                                best_val = dev_dcf
-                                torch.save(sad_model, model_path)
-                            
-
-                            if dev_dcf < best_val:
-                                best_val = dev_dcf
-                                torch.save(sad_model, model_path)
-                            
                             print(f'Dev Accuracy: {dev_accuracy*100:.2f}, Dev DCF: {dev_dcf*100:.4f}')
                             best_smooth_window_dcf = 101
                             for window_idx, window in enumerate(smooth_window):
