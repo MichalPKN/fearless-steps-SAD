@@ -1,11 +1,11 @@
 import load
-import model
+import model_architectures.model
 import model2l
 import numpy as np
 import os
 import argparse
 import time
-from helper_functions import plot_result, SADDataset, split_file, check_gradients, smooth_outputs
+from utils import plot_result, SADDataset, split_file, check_gradients, smooth_outputs
 
 import torch
 from torch.utils.data import Dataset, DataLoader

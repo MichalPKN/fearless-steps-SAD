@@ -1,6 +1,6 @@
 print("starting code")
 import load
-import model_architectures.model_rnn as model_sad
+import model_architectures.model_crnn as model_sad
 import numpy as np
 import os
 import argparse
@@ -109,14 +109,14 @@ for f_test in range(1):
         print(f"X_dev length: {len(X_dev)}")
         print(f"X_dev[0] shape: {X_dev[0].shape}")
         
-        for num_layers in [2]:#[2, 4]:
-            for hidden_size in [1024]:
-                for learning_rate in [0.001, 0.0001, 0.00001]: #[0.001, 0.0001, 0.00001]:
+        for num_layers in [0]:#[2, 4]:
+            for hidden_size in [0]:
+                for learning_rate in [0]: #[0.001, 0.0001, 0.00001]:
                     print(f"\n\nbatch_size: {batch_size}, sequence_size: {audio_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}, num_layers: {num_layers}")
                     #print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
                     
                     # model
-                    sad_model = model_sad.SADModel(input_size, hidden_size, num_layers).to(device)
+                    sad_model = model_sad.SADModel(input_size).to(device)
                     if torch.cuda.device_count() > 1:
                         print(f"Using {torch.cuda.device_count()} GPUs")
                         sad_model = torch.nn.DataParallel(sad_model)
@@ -141,7 +141,7 @@ for f_test in range(1):
                     optimizer = torch.optim.Adam(sad_model.parameters(), lr=learning_rate)
                     
                     best_val = 100
-                    model_path = os.path.join(datadir_path, "models", f"model_rnn_{batch_size}-{audio_size}_{learning_rate}_{hidden_size}_{num_layers}.pt")
+                    model_path = os.path.join(datadir_path, "models", f"model_sad_{batch_size}-{audio_size}_{learning_rate}_{hidden_size}_{num_layers}.pt")
 
                     # training
                     load_time = time.time() - start_time

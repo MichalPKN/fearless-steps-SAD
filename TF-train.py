@@ -6,7 +6,7 @@ import os
 import argparse
 import time
 import gc
-from helper_functions import plot_result, SADDataset, split_file, check_gradients, smooth_outputs_rnn
+from utils import plot_result, SADDataset, split_file, check_gradients, smooth_outputs_rnn
 
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -143,7 +143,7 @@ for f_test in range(1):
                     optimizer = torch.optim.Adam(sad_model.parameters(), lr=learning_rate)
                     
                     best_val = 100
-                    model_path = os.path.join(datadir_path, "models", f"model_rnn_{batch_size}-{audio_size}_{learning_rate}_{hidden_size}_{num_layers}.pt")
+                    model_path = os.path.join(datadir_path, "models", f"model_tf_{batch_size}-{audio_size}_{learning_rate}_{hidden_size}_{num_layers}.pt")
 
                     # training
                     load_time = time.time() - start_time
