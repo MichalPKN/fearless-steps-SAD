@@ -109,9 +109,9 @@ for f_test in range(1):
         print(f"X_dev length: {len(X_dev)}")
         print(f"X_dev[0] shape: {X_dev[0].shape}")
         
-        for num_layers in [0]:#[2, 4]:
-            for hidden_size in [0]:
-                for learning_rate in [0]: #[0.001, 0.0001, 0.00001]:
+        for num_layers_aaaaaa in [0]:#[2, 4]:
+            for hidden_size_aaaa in [0]:
+                for learning_rate in [0.0001]: #[0.001, 0.0001, 0.00001]:
                     print(f"\n\nbatch_size: {batch_size}, sequence_size: {audio_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}, num_layers: {num_layers}")
                     #print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
                     
@@ -189,17 +189,17 @@ for f_test in range(1):
                             y_nonspeech_time += ((batch_y == 0) * mask).sum().item()
                             
                             running_loss += loss.item()
-                            ## debug:
-                            # if epoch == 0 and (i < 20 or (i > 150 and i < 170)):
-                                # print(f"i: {i}, Loss: {running_loss/(i+1):.4f}, running_loss: {running_loss:.4f}")
-                            # if epoch == 0 and i % (len(X) // 10) == 0:
-                            #     train_accuracy = correct_predictions / total_predictions
-                            #     pfp = fp_time / (y_nonspeech_time + 0.0001) # false alarm
-                            #     pfn = fn_time / (y_speech_time + 0.0001) # miss
-                            #     dcf = 0.75 * pfn + 0.25 * pfp
-                            #     print(f'first epoch, Loss: {loss:.4f}, Accuracy: {train_accuracy*100:.2f}, DCF: {dcf*100:.2f}')
-                            #     print("size:", len(preds), "fp_time:", preds.sum(), "ones actual:", batch_y.sum(), "mean:", outputs.mean())
-                            #     print("-----------------------------")
+                            # debug:
+                            if epoch == 0 and (i < 20 or (i > 150 and i < 170)):
+                                print(f"i: {i}, Loss: {running_loss/(i+1):.4f}, running_loss: {running_loss:.4f}")
+                            if epoch == 0 and i % (len(X) // 10) == 0:
+                                train_accuracy = correct_predictions / total_predictions
+                                pfp = fp_time / (y_nonspeech_time + 0.0001) # false alarm
+                                pfn = fn_time / (y_speech_time + 0.0001) # miss
+                                dcf = 0.75 * pfn + 0.25 * pfp
+                                print(f'first epoch, Loss: {loss:.4f}, Accuracy: {train_accuracy*100:.2f}, DCF: {dcf*100:.2f}')
+                                print("size:", len(preds), "fp_time:", preds.sum(), "ones actual:", batch_y.sum(), "mean:", outputs.mean())
+                                print("-----------------------------")
                             i += 1
                         train_accuracy = correct_predictions / total_predictions
                         pfp = fp_time / y_nonspeech_time # false alarm

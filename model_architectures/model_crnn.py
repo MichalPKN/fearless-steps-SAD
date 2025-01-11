@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 class SADModel(nn.Module):
-    def __init__(self, input_size=40, hidden_size=128, num_layers=3, dropout=0.5):
+    def __init__(self, input_size=30, hidden_size=128, num_layers=3, dropout=0.5):
         super(SADModel, self).__init__()
         
         self.conv1 = nn.Conv2d(1, 64, kernel_size=(3, 3), padding=(1, 1))
@@ -45,8 +45,8 @@ class SADModel(nn.Module):
         x = self.pool(x)
         
         #flatten
-        x = x.permute(0, 2, 1, 3)
-        x = x.contiguous().view(x.size(0), x.size(1), -1)
+        batch_size, channels, seq_len, pooled_mfcc = x.shape
+        x = x.permute(0, 2, 1, 3).reshape(batch_size, seq_len, channels * pooled_mfcc)
         
         x, _ = self.lstm(x)  # lstm_out: [batch_size, seq_len, hidden_size]
         x = self.fc(x)  # fc_out: [batch_size, seq_len, 1]
