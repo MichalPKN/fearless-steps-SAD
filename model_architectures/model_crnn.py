@@ -2,21 +2,21 @@ import torch
 import torch.nn as nn
 
 class SADModel(nn.Module):
-    def __init__(self, input_size=30, hidden_size=128, num_layers=3, dropout=0.5):
+    def __init__(self, input_size=30, hidden_size=128, num_layers=3, dropout=0.5, filter_num=64):
         super(SADModel, self).__init__()
         
-        self.conv1 = nn.Conv2d(1, 64, kernel_size=(3, 3), padding=(1, 1))
-        self.conv2 = nn.Conv2d(64, 64, kernel_size=(3, 3), padding=(1, 1))
-        self.conv3 = nn.Conv2d(64, 64, kernel_size=(3, 3), padding=(1, 1))
+        self.conv1 = nn.Conv2d(1, filter_num, kernel_size=(3, 3), padding=(1, 1))
+        self.conv2 = nn.Conv2d(filter_num, filter_num, kernel_size=(3, 3), padding=(1, 1))
+        self.conv3 = nn.Conv2d(filter_num, filter_num, kernel_size=(3, 3), padding=(1, 1))
         
-        self.bn = nn.BatchNorm2d(64)
+        self.bn = nn.BatchNorm2d(filter_num)
         
         self.pool = nn.MaxPool2d(kernel_size=(1, 2), stride=(1, 2))
         
         self.relu = nn.ReLU()
         
         self.lstm = nn.LSTM(
-            input_size=(input_size // 8) * 64,
+            input_size=(input_size // 8) * filter_num,
             hidden_size=hidden_size, 
             num_layers=num_layers, 
             batch_first=True,

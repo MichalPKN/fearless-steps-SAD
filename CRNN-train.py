@@ -41,7 +41,7 @@ print("CUDA device count:", torch.cuda.device_count())
 
 # hyperparameters
 input_size = 30
-hidden_size = [1024, 512]
+hidden_size = 256
 epochs = 3 if debug else 28
 # batch_size = 1
 criteria = 0.5
@@ -94,7 +94,7 @@ gc.collect()
 # training
 test_num = 1
 for f_test in range(1):
-    for batch_size, audio_size in [[10, 1000]]:
+    for batch_size, audio_size in [[10, 1000], [30, 10000]]:
         print(f"\nsplitting, padding, etc. all data to batch size {batch_size}, audio size {audio_size}")
         X, Y = split_file(X_loaded, Y_loaded, batch_size=audio_size, shuffle=False)
         dataset = SADDataset(X, Y) 
@@ -109,9 +109,9 @@ for f_test in range(1):
         print(f"X_dev length: {len(X_dev)}")
         print(f"X_dev[0] shape: {X_dev[0].shape}")
         
-        for num_layers_aaaaaa in [0]:#[2, 4]:
-            for hidden_size_aaaa in [0]:
-                for learning_rate in [0.0001]: #[0.001, 0.0001, 0.00001]:
+        for num_layers in [2]:#[2, 4]:
+            for filter_num in [16, 32]:
+                for learning_rate in [0.0001, 0.00001]: #[0.001, 0.0001, 0.00001]:
                     print(f"\n\nbatch_size: {batch_size}, sequence_size: {audio_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}, num_layers: {num_layers}")
                     #print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
                     
