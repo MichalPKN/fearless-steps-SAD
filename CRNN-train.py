@@ -84,8 +84,8 @@ for i in range(len(dev_idxs)):
 # eval data
 X_val_loaded, val_info, Y_val_loaded = data_loader.load_all(dev_path, dev_labels)
 if debug:
-    X_val_loaded = [x[:20534] for x in X_val_loaded]
-    Y_val_loaded = [y[:20567] for y in Y_val_loaded]
+    X_val_loaded = [x[:40534] for x in X_val_loaded]
+    Y_val_loaded = [y[:40567] for y in Y_val_loaded]
 print(f"num of eval data: {len(X_val_loaded)}")
 
 del X_loaded_all, Y_loaded_all
@@ -112,11 +112,11 @@ for f_test in range(1):
         for num_layers in [2]:#[2, 4]:
             for filter_num in [16, 32]:
                 for learning_rate in [0.0001, 0.00001]: #[0.001, 0.0001, 0.00001]:
-                    print(f"\n\nbatch_size: {batch_size}, sequence_size: {audio_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}, num_layers: {num_layers}")
+                    print(f"\n\nbatch_size: {batch_size}\n sequence_size: {audio_size}\n learning_rate: {learning_rate}\n hidden_size: {hidden_size}\n num_layers: {num_layers}\n filter_num: {filter_num}")
                     #print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
                     
                     # model
-                    sad_model = model_sad.SADModel(input_size).to(device)
+                    sad_model = model_sad.SADModel(input_size, hidden_size, num_layers=num_layers, filter_num=filter_num)
                     if torch.cuda.device_count() > 1:
                         print(f"Using {torch.cuda.device_count()} GPUs")
                         sad_model = torch.nn.DataParallel(sad_model)
@@ -191,8 +191,8 @@ for f_test in range(1):
                             running_loss += loss.item()
                             # debug:
                             if epoch == 0 and (i < 20 or (i > 150 and i < 170)):
-                                print(f"i: {i}, Loss: {running_loss/(i+1):.4f}, running_loss: {running_loss:.4f}")
-                            if epoch == 0 and i % (len(X) // 10) == 0:
+                                print(f"i: {i}, Loss: {running_loss/(i+1):.4f}, running_loss: {running_loss/(i+1):.4f}")
+                            if epoch == 0 and len(X) > 10 and i % (len(X) // 10) == 0:
                                 train_accuracy = correct_predictions / total_predictions
                                 pfp = fp_time / (y_nonspeech_time + 0.0001) # false alarm
                                 pfn = fn_time / (y_speech_time + 0.0001) # miss
