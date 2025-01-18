@@ -47,7 +47,7 @@ epochs = 3 if debug else 28
 criteria = 0.5
 # learning_rate = 0.001
 frame_length = 0.01
-num_layers = 4
+num_layers = 2
 shuffle_batches = True
 audio_size = 10000
 num_heads = 4
@@ -58,8 +58,8 @@ data_loader = load.LoadAudio(debug=debug, input_size=input_size, frame_length=fr
 # train data
 X_loaded_all, audio_info, Y_loaded_all = data_loader.load_all(train_path, train_labels)
 if debug:
-    X_loaded_all = [x[:20830] for x in X_loaded_all]
-    Y_loaded_all = [y[:20789] for y in Y_loaded_all]
+    X_loaded_all = [x[:40830] for x in X_loaded_all]
+    Y_loaded_all = [y[:40789] for y in Y_loaded_all]
 
 # train test split
 print(f"num of data before train dev split: {len(X_loaded_all)}")
@@ -96,7 +96,7 @@ gc.collect()
 # training
 test_num = 1
 for f_test in range(1):
-    for batch_size, audio_size in [[10, 1000]]:
+    for batch_size, audio_size in [[10, 1000], [30, 10000]]:
         print(f"\nsplitting, padding, etc. all data to batch size {batch_size}, audio size {audio_size}")
         X, Y = split_file(X_loaded, Y_loaded, batch_size=audio_size, shuffle=False)
         dataset = SADDataset(X, Y) 
@@ -112,12 +112,13 @@ for f_test in range(1):
         print(f"X_dev[0] shape: {X_dev[0].shape}")
         
         for num_layers in [num_layers]:
-            for hidden_size in [hidden_size]:
-                for learning_rate in [0.0001]: #[0.001, 0.0001, 0.00001]:
+            for hidden_size in [128, 256]:
+                for learning_rate in [0.0001, 0.00001]: #[0.001, 0.0001, 0.00001]:
                     print(f"\n\nbatch_size: {batch_size}, sequence_size: {audio_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}, num_layers: {num_layers}")
                     #print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
                     
                     # model
+                    # embedding_size = hidden_size
                     sad_model = model_sad.SADModel(input_size, hidden_size, num_heads, num_layers, audio_size).to(device)
                     if torch.cuda.device_count() > 1:
                         print(f"Using {torch.cuda.device_count()} GPUs")
