@@ -116,7 +116,7 @@ for f_test in range(1):
                     #print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
                     
                     # model
-                    sad_model = model_sad.SADModel(input_size, hidden_size, num_layers=num_layers, filter_num=filter_num)
+                    sad_model = model_sad.SADModel(input_size, hidden_size, num_layers=num_layers, filter_num=filter_num).to(device)
                     if torch.cuda.device_count() > 1:
                         print(f"Using {torch.cuda.device_count()} GPUs")
                         sad_model = torch.nn.DataParallel(sad_model)
