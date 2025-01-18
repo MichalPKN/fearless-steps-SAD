@@ -1,6 +1,6 @@
 print("starting code")
 import load
-import model_transformer as model_sad
+import model_architectures.model_transformer as model_sad
 import numpy as np
 import os
 import argparse
