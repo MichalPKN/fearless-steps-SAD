@@ -16,7 +16,7 @@ class SADModel(nn.Module):
         self.relu = nn.ReLU()
         
         self.lstm = nn.LSTM(
-            input_size=(input_size // 8) * filter_num,
+            input_size=(input_size // 2) * filter_num,
             hidden_size=hidden_size, 
             num_layers=num_layers, 
             batch_first=True,
@@ -37,12 +37,12 @@ class SADModel(nn.Module):
         x = self.conv2(x)
         x = self.bn(x)
         x = self.relu(x)
-        x = self.pool(x)
+        #x = self.pool(x)
         
         x = self.conv3(x)
         x = self.bn(x)
         x = self.relu(x)
-        x = self.pool(x)
+        #x = self.pool(x)
         
         #flatten
         batch_size, channels, seq_len, pooled_mfcc = x.shape
