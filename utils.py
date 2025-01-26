@@ -56,52 +56,75 @@ def plot_result(y_actual, y_pred, processed_predictions=None, additional=None, p
         plt.show()
 
 class SADDataset(Dataset):
-    def __init__(self, X, Y, max_len=None):
+    def __init__(self, X, Y, masks, max_len=None, overlap=0):
         self.X = X  # List of feature matrices
         self.Y = Y  # List of labels (0/1)
         #self.min_len = min_len or min([len(x) for x in X])
-        self.max_len = max_len or max([len(x) for x in X])
-
+        #self.max_len = max_len or max([len(x) for x in X])
+        #self.overlap = overlap // 2
+        self.masks = masks
     def __len__(self):
         return len(self.X)
     
     def __getitem__(self, idx):
         x = torch.tensor(self.X[idx], dtype=torch.float32)
         y = torch.tensor(self.Y[idx], dtype=torch.float32)
-        x_padded = F.pad(x, (0, 0, 0, self.max_len - len(x)))
-        y_padded = F.pad(y, (0, 0, 0, self.max_len - len(y)))
+        mask = torch.tensor(self.masks[idx], dtype=torch.float32)
+        # x_padded = F.pad(x, (0, 0, 0, self.max_len - len(x)))
+        # y_padded = F.pad(y, (0, 0, 0, self.max_len - len(y)))
         
-        mask = torch.zeros_like(y_padded)
-        mask[:len(x)] = 1
-        return x_padded, y_padded, mask
+        # mask = torch.zeros_like(y_padded)
+        # mask[:len(x)] = 1
+        # if idx > 0:
+        #     mask[:self.overlap] = 0
+        # if idx < len(self.X) - 1:
+        #     mask[-self.overlap:] = 0
+        return x, y, mask
         # x_cut = x[:self.min_len]
         # y_cut = y[:self.min_len]
         # return x_cut, y_cut
 
 
-def split_file(X, y, batch_size=10000, shuffle=False):
-    X_batches = []
-    y_batches = []
+def split_file(X, y, seq_size=1000, overlap=200, shuffle=False):
+    X_sequences = []
+    y_sequences = []
+    masks = []
+    step_size = seq_size - overlap
     for j in range(len(X)):
-        for i in range(0, len(X[j]), batch_size):
-            X_batches.append(X[j][i:i + batch_size])
-            y_batches.append(y[j][i:i + batch_size])
+        X[j] = torch.tensor(X[j], dtype=torch.float32)
+        y[j] = torch.tensor(y[j], dtype=torch.float32)
+        start = 0
+        while start + step_size < len(X[j]):
+            end = min(start + seq_size, len(X[j]))
+            x_padded = F.pad(X[j][start:end], (0, 0, 0, seq_size - (end - start)))
+            y_padded = F.pad(y[j][start:end], (0, 0, 0, seq_size - (end - start)))
+            mask = torch.zeros_like(y_padded)
+            mask[:end-start] = 1
+            if start > 0:
+                mask[:overlap//2] = 0
+            if end < len(X[j]):
+                mask[-(overlap//2):] = 0
+            X_sequences.append(x_padded)
+            y_sequences.append(y_padded)
+            masks.append(mask)
+            start += step_size
         
-        # remainder batch
-        remainder_length = len(X[j]) % batch_size
-        if remainder_length > 1:
-            X_batches.append(X[j][len(X[j]) - len(X[j]) % batch_size:])
-            y_batches.append(y[j][len(y[j]) - len(y[j]) % batch_size:])
+        # # remainder batch
+        # remainder_length = len(X[j]) % (seq_size - overlap)
+        # if remainder_length > 1:
+        #     X_sequences.append(X[j][len(X[j]) - len(X[j]) % (step_size):])
+        #     y_sequences.append(y[j][len(y[j]) - len(y[j]) % (step_size):])
             
-    if shuffle:
-        zipped = list(zip(X_batches, y_batches))
-        np.random.shuffle(zipped)
-        X_batches, y_batches = zip(*zipped)
+    # if shuffle:
+    #     print("warning, shuffling")
+    #     zipped = list(zip(X_sequences, y_sequences))
+    #     np.random.shuffle(zipped)
+    #     X_sequences, y_sequences = zip(*zipped)
 
-    print("Number of batches: ", len(X_batches))
-    print("y_batches length: ", len(y_batches))
-        
-    return X_batches, y_batches
+    print("Number of sequences: ", len(X_sequences))
+    print("y_sequences length: ", len(y_sequences))
+    print("last sequence length: ", len(X_sequences[len(X_sequences) - 1]))
+    return X_sequences, y_sequences, masks
 
 def check_gradients(asd_model):
     """Check for exploding/vanishing gradients."""
