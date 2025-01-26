@@ -49,7 +49,7 @@ criteria = 0.5
 # learning_rate = 0.001
 frame_length = 0.01
 num_layers = 2
-shuffle_batches = False
+shuffle_batches = True
 audio_size = 1000
 overlap = 200
 

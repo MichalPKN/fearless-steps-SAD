@@ -115,11 +115,17 @@ def split_file(X, y, seq_size=1000, overlap=200, shuffle=False):
         #     X_sequences.append(X[j][len(X[j]) - len(X[j]) % (step_size):])
         #     y_sequences.append(y[j][len(y[j]) - len(y[j]) % (step_size):])
             
-    # if shuffle:
-    #     print("warning, shuffling")
-    #     zipped = list(zip(X_sequences, y_sequences))
-    #     np.random.shuffle(zipped)
-    #     X_sequences, y_sequences = zip(*zipped)
+    if shuffle:
+        # Stack sequences into tensors for shuffling
+        X_sequences = torch.stack(X_sequences)
+        y_sequences = torch.stack(y_sequences)
+        masks = torch.stack(masks)
+        
+        # Generate shuffled indices
+        perm = torch.randperm(X_sequences.size(0))
+        X_sequences = X_sequences[perm]
+        y_sequences = y_sequences[perm]
+        masks = masks[perm]
 
     print("Number of sequences: ", len(X_sequences))
     print("y_sequences length: ", len(y_sequences))
