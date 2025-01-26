@@ -43,7 +43,7 @@ print("CUDA device count:", torch.cuda.device_count())
 # hyperparameters
 input_size = 30
 hidden_size = [1024, 512]
-epochs = 3 if debug else 28
+epochs = 3 if debug else 20
 # batch_size = 1
 criteria = 0.5
 # learning_rate = 0.001

@@ -43,7 +43,7 @@ print("CUDA device count:", torch.cuda.device_count())
 # hyperparameters
 input_size = 30
 hidden_size = 256
-epochs = 3 if debug else 28
+epochs = 3 if debug else 20
 # batch_size = 1
 criteria = 0.5
 # learning_rate = 0.001
@@ -205,6 +205,15 @@ for f_test in range(1):
                                 path=path, file_name="sad_prediction_comparison_hp_" + str(test_num) + ".png", debug=False, \
                                 title=f"batch_size: {batch_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
                     test_num += 1
+                    print("\n----------------------------------------\n\n\n")
+                    
+                    print("\n----------------------------------------\n")
+        
+                    print("results:")
+                    print(f"parameters: batch_size: {batch_size}, audio_size: {audio_size}, overlap: {overlap}, hidden_size: {hidden_size}, num_layers: {num_layers}, learning_rate: {learning_rate}")
+                    print("train\tdev\tdev_sm\teval\teval_sm\tsm_window")
+                    print(f"{dcf_train*100:.4f}\t{dcf_dev*100:.4f}\t{dcf_dev_smooth*100:.4f}\t{eval_dcf*100:.4f}\t{eval_dcf_smooth*100:.4f}\t{best_smooth_window}")
+                    
                     print("\n----------------------------------------\n\n\n")
                     
         del sad_model, best_model, dataset, dataset_dev, dataset_val, dataloader, dataloader_dev, dataloader_val
