@@ -112,7 +112,7 @@ for f_test in range(1):
         print(f"X_dev[0] shape: {X_dev[0].shape}")
         
         for num_layers in [4]:#[2, 4]:
-            for hidden_size in [256]: #[[512, 0.0001], [1024, 0.001], [1024, 0.0001]]:
+            for hidden_size in [256, 128]: #[[512, 0.0001], [1024, 0.001], [1024, 0.0001]]:
                 for learning_rate in [0.001]: #[0.001, 0.0001, 0.00001]:
                     print(f"\n\nbatch_size: {batch_size}, sequence_size: {audio_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}, num_layers: {num_layers}")
                     #print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
