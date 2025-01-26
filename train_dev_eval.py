@@ -57,7 +57,7 @@ def train_model(sad_model, optimizer, criterion, X_size, criteria, epochs, devic
     pfn = fn_time / y_speech_time # miss
     dcf = 0.75 * pfn + 0.25 * pfp
     print()
-    print(f"total features predicted: {total_predictions}, num of batches: {i}, mask sum in base seq: {mask[0].sum()}, mask sum in last sequence: {mask[len(mask)-1].sum()}")
+    #print(f"total features predicted: {total_predictions}, num of batches: {i}, mask sum in base seq: {mask[0].sum()}, mask sum in last sequence: {mask[len(mask)-1].sum()}")
     print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/X_size:.4f}, Accuracy: {train_accuracy*100:.2f}, DCF: {dcf*100:.4f}")
 
     return losses, dcf
