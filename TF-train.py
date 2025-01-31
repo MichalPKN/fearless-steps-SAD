@@ -116,6 +116,10 @@ for f_test in range(1):
         for num_layers in [2, 4]:
             for hidden_size in [128, 256, 512]:
                 for learning_rate in [0.001, 0.0001, 0.00001]: #[0.001, 0.0001, 0.00001]:
+                    
+                    if num_layers == 2 and hidden_size != 512:
+                        continue
+                    
                     print(f"\n\nbatch_size: {batch_size}, sequence_size: {audio_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}, num_layers: {num_layers}")
                     #print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
                     
