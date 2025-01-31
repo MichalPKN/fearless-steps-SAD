@@ -121,7 +121,7 @@ for f_test in range(1):
                     
                     # model
                     # embedding_size = hidden_size
-                    sad_model = model_sad.SADModel(input_size, hidden_size, num_heads, num_layers, audio_size).to(device)
+                    sad_model = model_sad.SADModel(input_size, embed_size=hidden_size, num_heads=num_heads, num_layers=num_layers, seq_length=audio_size).to(device)
                     if torch.cuda.device_count() > 1:
                         print(f"Using {torch.cuda.device_count()} GPUs")
                         sad_model = torch.nn.DataParallel(sad_model)
