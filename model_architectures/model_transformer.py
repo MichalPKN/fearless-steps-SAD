@@ -12,9 +12,11 @@ class SADModel(nn.Module):
             num_layers=num_layers
         )
         self.fc_out = nn.Linear(embed_size, 1)
+        self.layer_norm = nn.LayerNorm(embed_size)
         
     def forward(self, x):
         x = self.embedding(x) + self.positional_encoding
+        x = self.layer_norm(x)
         x = self.transformer_encoder(x)
         x = self.fc_out(x)
         return x
