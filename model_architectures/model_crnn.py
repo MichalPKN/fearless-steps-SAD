@@ -5,11 +5,13 @@ class SADModel(nn.Module):
     def __init__(self, input_size=30, hidden_size=128, num_layers=3, dropout=0.5, filter_num=64):
         super(SADModel, self).__init__()
         
-        self.conv1 = nn.Conv2d(1, filter_num, kernel_size=(3, 3), padding=(1, 1))
-        self.conv2 = nn.Conv2d(filter_num, filter_num, kernel_size=(3, 3), padding=(1, 1))
-        self.conv3 = nn.Conv2d(filter_num, filter_num, kernel_size=(3, 3), padding=(1, 1))
+        self.conv1 = nn.Conv2d(1, filter_num//4, kernel_size=(3, 3), padding=(1, 1))
+        self.conv2 = nn.Conv2d(filter_num//4, filter_num//2, kernel_size=(3, 3), padding=(1, 1))
+        self.conv3 = nn.Conv2d(filter_num//2, filter_num, kernel_size=(3, 3), padding=(1, 1))
         
-        self.bn = nn.BatchNorm2d(filter_num)
+        self.bn1 = nn.BatchNorm2d(filter_num//4)
+        self.bn2 = nn.BatchNorm2d(filter_num//2)
+        self.bn3 = nn.BatchNorm2d(filter_num)
         
         self.pool = nn.MaxPool2d(kernel_size=(1, 2), stride=(1, 2))
         
@@ -30,17 +32,17 @@ class SADModel(nn.Module):
         x = x.unsqueeze(1)
         
         x = self.conv1(x)
-        x = self.bn(x)
+        x = self.bn1(x)
         x = self.relu(x)
         x = self.pool(x)
         
         x = self.conv2(x)
-        x = self.bn(x)
+        x = self.bn2(x)
         x = self.relu(x)
         #x = self.pool(x)
         
         x = self.conv3(x)
-        x = self.bn(x)
+        x = self.bn3(x)
         x = self.relu(x)
         #x = self.pool(x)
         
