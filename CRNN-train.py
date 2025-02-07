@@ -168,7 +168,6 @@ for f_test in range(1):
                             dcf_dev = dev_dcf
                             dcf_dev_smooth = best_smooth_window_dcf
                             best_smooth_window = top_smooth_window
-                            print(dcf_train, dcf_dev, dev_dcf, best_smooth_window_dcf)
                             torch.save(sad_model, model_path)
                                 
                     # evaluation

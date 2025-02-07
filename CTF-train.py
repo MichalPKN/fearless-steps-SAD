@@ -114,7 +114,7 @@ for f_test in range(1):
         print(f"X_dev length: {len(X_dev)}")
         print(f"X_dev[0] shape: {X_dev[0].shape}")
         
-        for num_layers in [4]:
+        for num_layers in [6]:
             for hidden_size in [256]:
                 for learning_rate in [0.001, 0.0001]: #[0.001, 0.0001, 0.00001]:
                     
@@ -176,7 +176,6 @@ for f_test in range(1):
                             dcf_dev = dev_dcf
                             dcf_dev_smooth = best_smooth_window_dcf
                             best_smooth_window = top_smooth_window
-                            print(dcf_train, dcf_dev, dev_dcf, best_smooth_window_dcf)
                             torch.save(sad_model, model_path)
                                 
                     # evaluation

@@ -60,8 +60,8 @@ data_loader = load.LoadAudio(debug=debug, input_size=input_size, frame_length=fr
 # train data
 X_loaded_all, audio_info, Y_loaded_all = data_loader.load_all(train_path, train_labels)
 if debug:
-    X_loaded_all = [x[:40830] for x in X_loaded_all]
-    Y_loaded_all = [y[:40789] for y in Y_loaded_all]
+    X_loaded_all = [x[:20030] for x in X_loaded_all]
+    Y_loaded_all = [y[:20030] for y in Y_loaded_all]
 
 # train test split
 print(f"num of data before train dev split: {len(X_loaded_all)}")
@@ -88,12 +88,9 @@ for i in range(len(dev_idxs)):
 # eval data
 X_val_loaded, val_info, Y_val_loaded = data_loader.load_all(dev_path, dev_labels)
 if debug:
-    X_val_loaded = [x[:20534] for x in X_val_loaded]
-    Y_val_loaded = [y[:20567] for y in Y_val_loaded]
+    X_val_loaded = [x[:20134] for x in X_val_loaded]
+    Y_val_loaded = [y[:20134] for y in Y_val_loaded]
 print(f"num of eval data: {len(X_val_loaded)}")
-
-del X_loaded_all, Y_loaded_all
-gc.collect()
 
 # training
 test_num = 1
@@ -171,7 +168,6 @@ for f_test in range(1):
                             dcf_dev = dev_dcf
                             dcf_dev_smooth = best_smooth_window_dcf
                             best_smooth_window = top_smooth_window
-                            print(dcf_train, dcf_dev, dev_dcf, best_smooth_window_dcf)
                             torch.save(sad_model, model_path)
                                 
                     # evaluation
