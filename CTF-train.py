@@ -115,7 +115,7 @@ for f_test in range(1):
         print(f"X_dev[0] shape: {X_dev[0].shape}")
         
         for num_layers in [6]:
-            for hidden_size in [256]:
+            for hidden_size in [128, 256, 512]:
                 for learning_rate in [0.001, 0.0001]: #[0.001, 0.0001, 0.00001]:
                     
                     if num_layers == 2 and hidden_size != 512:
