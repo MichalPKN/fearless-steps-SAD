@@ -113,7 +113,7 @@ for f_test in range(1):
         
         for num_layers in [2]:#[2, 4]:
             for filter_num in [64]:
-                for learning_rate in [0.001, 0.0001, 0.00001]: #[0.001, 0.0001, 0.00001]:
+                for learning_rate in [0.001, 0.0001]: #[0.001, 0.0001, 0.00001]:
                     print(f"\n\nbatch_size: {batch_size}\n sequence_size: {audio_size}\n learning_rate: {learning_rate}\n hidden_size: {hidden_size}\n num_layers: {num_layers}\n filter_num: {filter_num}")
                     #print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
                     
