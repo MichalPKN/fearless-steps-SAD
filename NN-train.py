@@ -96,7 +96,7 @@ gc.collect()
 # training
 test_num = 1
 for f_test in range(1):
-    for batch_size, audio_size, overlap in [[10, 500, 100]]:
+    for batch_size, audio_size, overlap in [[10, 500, 100], [10, 200, 40], [10, 100, 20], [10, 50, 10], [10, 25, 5], [10, 10, 2], [10, 5, 1]]:
         print(f"\nsplitting, padding, etc. all data to batch size {batch_size}, audio size {audio_size}, overlap {overlap}")
         X, Y, masks = split_file(X_loaded, Y_loaded, seq_size=audio_size, overlap=overlap, shuffle=False) #TODO: use in all
         dataset = SADDataset(X, Y, masks)
