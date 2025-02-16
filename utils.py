@@ -91,8 +91,10 @@ def split_file(X, y, seq_size=1000, overlap=200, shuffle=False):
     masks = []
     step_size = seq_size - overlap
     for j in range(len(X)):
-        X[j] = torch.tensor(X[j], dtype=torch.float32)
-        y[j] = torch.tensor(y[j], dtype=torch.float32)
+        if not isinstance(X[j], torch.Tensor):
+            X[j] = torch.tensor(X[j], dtype=torch.float32)
+        if not isinstance(y[j], torch.Tensor):
+            y[j] = torch.tensor(y[j], dtype=torch.float32)
         start = 0
         while start + step_size < len(X[j]):
             end = min(start + seq_size, len(X[j]))
