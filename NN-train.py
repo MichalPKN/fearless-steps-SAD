@@ -96,7 +96,7 @@ gc.collect()
 # training
 test_num = 1
 for f_test in range(1):
-    for batch_size, audio_size, overlap in [[10, 25, 5], [10, 10, 2], [10, 5, 1]]:
+    for batch_size, audio_size, overlap in [[10, 500, 100], [10, 250, 50], [10, 100, 20], [10, 50, 10], [10, 25, 5], [10, 10, 2], [10, 5, 1]]:
         print(f"\nsplitting, padding, etc. all data to batch size {batch_size}, audio size {audio_size}, overlap {overlap}")
         X, Y, masks = split_file(X_loaded, Y_loaded, seq_size=audio_size, overlap=overlap, shuffle=False) #TODO: use in all
         dataset = SADDataset(X, Y, masks)
@@ -113,7 +113,7 @@ for f_test in range(1):
         
         for num_layers in [4]:#[2, 4]:
             for hidden_size in [[1024, 512]]: #[[512, 0.0001], [1024, 0.001], [1024, 0.0001]]:
-                for learning_rate in [0.001, 0.0001]: #[0.001, 0.0001, 0.00001]:
+                for learning_rate in [0.0001]: #[0.001, 0.0001, 0.00001]:
                     print(f"\n\nlearning_rate: {learning_rate}, hidden_size: {hidden_size}, num_layers: {num_layers}")
                     print(f"batch_size: {batch_size}, audio_size: {audio_size}, overlap: {overlap}")
                     #print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
@@ -184,7 +184,7 @@ for f_test in range(1):
                     dataloader_val = DataLoader(dataset_val, batch_size=1, shuffle=False)
                     
                     # eval
-                    eval_accuracy, eval_dcf, eval_dcf_smooth, toshow_y, toshow_preds, toshow_outputs, toshow_additional = evaluate_model(
+                    eval_accuracy, eval_dcf, eval_dcf_smooth, toshow_y,  toshow_preds, toshow_outputs, toshow_additional = evaluate_model(
                         best_model=best_model, dataloader_val=dataloader_val, criteria=criteria, device=device, best_smooth_window=best_smooth_window)
                         
                     print("finished training model")
