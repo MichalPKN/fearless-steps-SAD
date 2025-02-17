@@ -4,7 +4,7 @@
 #PBS -l select=1:ncpus=1:ngpus=1:mem=40gb:scratch_ssd=50gb:cuda_version=12.6
 #PBS -N nn_training
 DATADIR=/storage/brno2/home/miapp/fearless-steps-SAD/fearless-steps-SAD
-LOGFILE=$DATADIR/out_nn_4.log
+LOGFILE=$DATADIR/out_nn_5.log
 chmod 700 $SCRATCHDIR
 cp -r $DATADIR/* $SCRATCHDIR
 module add mambaforge
