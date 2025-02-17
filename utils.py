@@ -67,9 +67,18 @@ class SADDataset(Dataset):
         return len(self.X)
     
     def __getitem__(self, idx):
-        x = torch.tensor(self.X[idx], dtype=torch.float32)
-        y = torch.tensor(self.Y[idx], dtype=torch.float32)
-        mask = torch.tensor(self.masks[idx], dtype=torch.float32)
+        if torch.is_tensor(x[idx]):
+            x = x[idx]
+        else:
+            x = torch.tensor(self.X[idx], dtype=torch.float32)
+        if torch.is_tensor(y[idx]):
+            y = y[idx]
+        else:
+            y = torch.tensor(self.Y[idx], dtype=torch.float32)
+        if torch.is_tensor(self.masks[idx]):
+            mask = self.masks[idx]
+        else:
+            mask = torch.tensor(self.masks[idx], dtype=torch.float32)
         # x_padded = F.pad(x, (0, 0, 0, self.max_len - len(x)))
         # y_padded = F.pad(y, (0, 0, 0, self.max_len - len(y)))
         
