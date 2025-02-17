@@ -174,20 +174,21 @@ for f_test in range(1):
                                 
                     # evaluation
                     print("\nEVALUTAION")
-                    
+                    print("model loading")
                     best_model = torch.load(model_path)
                     
                     
                     
-                    
+                    print("var deleting")
                     # TMP
                     del X, Y, X_dev, Y_dev, masks, dataset, dataset_dev, dataloader, dataloader_dev
                     gc.collect()
                     
                     
                     
-                    
+                    print("data spliting")
                     X_val, Y_val, masks = split_file(X_val_loaded, Y_val_loaded, seq_size=audio_size, shuffle=False)
+                    print("dataset creating")
                     dataset_val = SADDataset(X_val, Y_val, masks)
                     print(f"X_val length: {len(X_val)}")
                     print(f"X_val[0] shape: {X_val[0].shape}")
