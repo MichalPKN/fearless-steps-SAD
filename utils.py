@@ -110,7 +110,7 @@ def split_file(X, y, seq_size=1000, overlap=200, shuffle=False):
             y_sequences.append(y_padded)
             masks.append(mask)
             start += step_size
-        
+    print("splitted")
         # # remainder batch
         # remainder_length = len(X[j]) % (seq_size - overlap)
         # if remainder_length > 1:
