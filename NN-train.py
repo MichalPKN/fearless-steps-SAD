@@ -96,7 +96,7 @@ gc.collect()
 # training
 test_num = 1
 for f_test in range(1):
-    for batch_size, audio_size, overlap in [[10, 100, 20], [10, 50, 10], [10, 25, 5], [10, 10, 2], [10, 5, 1]]:
+    for batch_size, audio_size, overlap in [[10, 100, 0], [10, 50, 0], [10, 25, 0], [10, 10, 0], [10, 5, 0], [10, 2, 0], [10, 1, 0]]: #[10, 500, 0], [10, 250, 0], 
         print(f"\nsplitting, padding, etc. all data to batch size {batch_size}, audio size {audio_size}, overlap {overlap}")
         X, Y, masks = split_file(X_loaded, Y_loaded, seq_size=audio_size, overlap=overlap, shuffle=False) #TODO: use in all
         dataset = SADDataset(X, Y, masks)
@@ -179,15 +179,15 @@ for f_test in range(1):
                     
                     
                     
-                    print("var deleting")
-                    # TMP
-                    del X, Y, X_dev, Y_dev, masks, dataset, dataset_dev, dataloader, dataloader_dev
-                    gc.collect()
+                    # print("var deleting")
+                    # # TMP
+                    # del X, Y, X_dev, Y_dev, masks, dataset, dataset_dev, dataloader, dataloader_dev
+                    # gc.collect()
                     
                     
                     
                     print("data spliting")
-                    X_val, Y_val, masks = split_file(X_val_loaded, Y_val_loaded, seq_size=audio_size, shuffle=False)
+                    X_val, Y_val, masks = split_file(X_val_loaded, Y_val_loaded, seq_size=audio_size, overlap=overlap, shuffle=False)
                     print("dataset creating")
                     dataset_val = SADDataset(X_val, Y_val, masks)
                     print(f"X_val length: {len(X_val)}")

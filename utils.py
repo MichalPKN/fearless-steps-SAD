@@ -111,9 +111,9 @@ def split_file(X, y, seq_size=1000, overlap=200, shuffle=False):
             y_padded = F.pad(y[j][start:end], (0, 0, 0, seq_size - (end - start)))
             mask = torch.zeros_like(y_padded)
             mask[:end-start] = 1
-            if start > 0:
+            if overlap > 0 and start > 0:
                 mask[:overlap//2] = 0
-            if end < len(X[j]):
+            if overlap > 0 and end < len(X[j]):
                 mask[-(overlap//2):] = 0
             X_sequences.append(x_padded)
             y_sequences.append(y_padded)
