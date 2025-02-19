@@ -8,6 +8,7 @@ models/
 Training_*
 debugprint
 tmp/
+vad_results.png
 
 
 ## PyTorch

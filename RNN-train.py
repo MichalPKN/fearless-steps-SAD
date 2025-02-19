@@ -93,10 +93,23 @@ print(f"num of eval data: {len(X_val_loaded)}")
 del X_loaded_all, Y_loaded_all
 gc.collect()
 
+# 10, 1000, 500
+# 10, 1000, 200
+# 10, 500, 250
+# 10, 500, 100
+# 10, 2000, 1000
+# 10, 2000, 400
+# 10, 300, 150
+# 10, 300, 60
+
+# [[10, 1000, 500], [10, 1000, 200], [10, 500, 250], [10, 500, 100], [10, 2000, 1000], [10, 2000, 400], [10, 300, 150], [10, 300, 60]]
+
+# [[10, 500, 50], [10, 500, 150], [10, 500, 200], [20, 500, 100]]
+
 # training
 test_num = 1
 for f_test in range(1):
-    for batch_size, audio_size, overlap in [[10, 500, 50], [10, 500, 150], [10, 500, 200], [20, 500, 100]]:
+    for batch_size, audio_size, overlap in [[10, 1000, 500], [10, 1000, 200], [10, 500, 250], [10, 500, 100], [10, 2000, 1000], [10, 2000, 400], [10, 300, 150], [10, 300, 60]]:
         print(f"\nsplitting, padding, etc. all data to batch size {batch_size}, audio size {audio_size}, overlap {overlap}")
         X, Y, masks = split_file(X_loaded, Y_loaded, seq_size=audio_size, overlap=overlap, shuffle=False) #TODO: use in all
         dataset = SADDataset(X, Y, masks)
@@ -143,7 +156,7 @@ for f_test in range(1):
                     
                     optimizer = torch.optim.Adam(sad_model.parameters(), lr=learning_rate)
                     
-                    model_path = os.path.join(datadir_path, "models", f"model_rnn_{batch_size}-{audio_size}_{learning_rate}_{hidden_size}_{num_layers}.pt")
+                    model_path = os.path.join(datadir_path, "models", f"model_rnn_{batch_size}-{audio_size}-{overlap}_{learning_rate}_{hidden_size}_{num_layers}.pt")
                     
                     
                     # training
@@ -177,7 +190,7 @@ for f_test in range(1):
                     
                     best_model = torch.load(model_path)
                     
-                    X_val, Y_val, masks = split_file(X_val_loaded, Y_val_loaded, seq_size=audio_size, shuffle=False)
+                    X_val, Y_val, masks = split_file(X_val_loaded, Y_val_loaded, seq_size=audio_size, overlap=overlap, shuffle=False)
                     dataset_val = SADDataset(X_val, Y_val, masks)
                     print(f"X_val length: {len(X_val)}")
                     print(f"X_val[0] shape: {X_val[0].shape}")

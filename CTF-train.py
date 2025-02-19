@@ -183,7 +183,7 @@ for f_test in range(1):
                     
                     best_model = torch.load(model_path)
                     
-                    X_val, Y_val, masks = split_file(X_val_loaded, Y_val_loaded, seq_size=audio_size, shuffle=False)
+                    X_val, Y_val, masks = split_file(X_val_loaded, Y_val_loaded, seq_size=audio_size, overlap=overlap, shuffle=False)
                     dataset_val = SADDataset(X_val, Y_val, masks)
                     print(f"X_val length: {len(X_val)}")
                     print(f"X_val[0] shape: {X_val[0].shape}")
