@@ -1,20 +1,15 @@
 print("starting code")
 import load
-import model_architectures.model_nn as model_sad
 import numpy as np
 import os
 import argparse
 import time
-import gc
-from utils import plot_result, SADDataset, split_file, check_gradients, smooth_outputs_rnn
-from train_dev_eval import train_model, validate_model, evaluate_model
+from utils import smooth_outputs_rnn
 import nemo.collections.asr as nemo_asr
 import librosa
 from utils import smooth_outputs_rnn
 
 import torch
-from torch.utils.data import Dataset, DataLoader
-from torch.nn import functional as F
 
 #turn to True later
 # torch.backends.cudnn.enabled = False
@@ -104,7 +99,7 @@ for audio_file in dev_files:
 
     #label_path = os.path.join(labels_path, labels_path)
     labels, num_of_1s, num_of_0s = loader.add_labels(label_path, vad_results)
-    labels = labels.squeeze()
+    labels = torch.from_numpy(labels.squeeze())
     
     if len(labels) < len(vad_results):
         vad_results = vad_results[:len(labels)]
