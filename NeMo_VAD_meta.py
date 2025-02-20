@@ -10,6 +10,7 @@ from utils import plot_result, SADDataset, split_file, check_gradients, smooth_o
 from train_dev_eval import train_model, validate_model, evaluate_model
 import nemo.collections.asr as nemo_asr
 import librosa
+from utils import smooth_outputs_rnn
 
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -48,7 +49,7 @@ vad_model = nemo_asr.models.EncDecClassificationModel.from_pretrained(model_name
 vad_model.spec_augmentation = None  # Disable augmentation
 vad_model.eval()
 
-# Function to process and classify a wav file
+
 def classify_audio(audio_path):
     audio, sr = librosa.load(audio_path, sr=16000, mono=True)
 
@@ -58,7 +59,7 @@ def classify_audio(audio_path):
     frames = [audio[i: i + frame_len] for i in range(0, len(audio) - frame_len, frame_step)]
     frames = torch.tensor(np.array(frames), dtype=torch.float32)
     print(f"frames: {frames.shape}")
-    frames = frames[:60000]
+    frames = frames
     print(f"frames: {frames.shape}")
     frames = frames.to(device)
     print(f"frames: {frames.shape}")
@@ -71,6 +72,10 @@ def classify_audio(audio_path):
 
     speech_probabilities = torch.sigmoid(predictions).squeeze().cpu().numpy()
     speech_detected = speech_probabilities[:, 0] < 0.6  # Threshold
+    speech_detected = speech_detected.reshape(1, -1, 1)
+    speech_detected = torch.tensor(speech_detected, dtype=torch.float32)
+    speech_detected = smooth_outputs_rnn(speech_detected, avg_frames=20, criteria=0.5)
+    speech_detected = speech_detected.squeeze()
     
     print(f"speech_detected: {speech_detected.shape}")
     print(f"num of ones: {np.count_nonzero(speech_detected)}")
@@ -78,27 +83,43 @@ def classify_audio(audio_path):
     
     return speech_detected, speech_probabilities
 
-# train
-audio_file = "fsc_p4_dev_001.wav"
-audio_path = os.join(dev_path, audio_file)
-vad_results, _ = classify_audio(audio_path)
+fp_time = 0
+fn_time = 0
+y_speech_time = 0
+y_nonspeech_time = 0
+accuracy = 0
+total_time = 0
+dev_files = os.listdir(dev_path).sort()
+for audio_file in dev_files:
+    audio_path = os.join(dev_path, audio_file)
+    
+    vad_results, _ = classify_audio(audio_path)
 
-# Print results
-print(f"vad_results: {vad_results[:400]}")
-print(f"classified: {vad_results.shape}")  # List of True/False for each 10ms segment
+    # Print results
+    print(f"vad_results: {vad_results[:+100]}")
+    print(f"classified: {vad_results.shape}")  # List of True/False for each 10ms segment
 
-label_file = "fsc_p4_dev_001.txt"
-label_path = os.join(dev_labels, label_file)
+    label_file = audio_file.split(".")[0] + ".txt"
+    label_path = os.join(dev_labels, label_file)
 
-#label_path = os.path.join(labels_path, labels_path)
-labels, num_of_1s, num_of_0s = loader.add_labels(label_path, vad_results)
-labels = labels.squeeze()
-print("added labels")
-print(f"shape: {labels.shape}")
-fp_time = np.count_nonzero((labels == 0) & (vad_results == 1))
-fn_time = np.count_nonzero((labels == 1) & (vad_results == 0))
-y_speech_time = (labels == 1).sum()
-y_nonspeech_time = (labels == 0).sum()
+    #label_path = os.path.join(labels_path, labels_path)
+    labels, num_of_1s, num_of_0s = loader.add_labels(label_path, vad_results)
+    labels = labels.squeeze()
+    
+    if len(labels) < len(vad_results):
+        vad_results = vad_results[:len(labels)]
+    elif len(labels) > len(vad_results):
+        labels = labels[:len(vad_results)]
+        
+    print("added labels")
+    print(f"shape: {labels.shape}")
+    fp_time += np.count_nonzero((labels == 0) & (vad_results == 1))
+    fn_time += np.count_nonzero((labels == 1) & (vad_results == 0))
+    y_speech_time += np.count_nonzero((labels == 1))
+    y_nonspeech_time += np.count_nonzero((labels == 0))
+    
+    accuracy += (labels == vad_results).sum()
+    total_time += len(labels)
 
 pfp = fp_time / y_nonspeech_time # false alarm
 pfn = fn_time / y_speech_time # miss
@@ -107,3 +128,6 @@ dcf = 0.75 * pfn + 0.25 * pfp
 print(f"dcf: {dcf}")
 print(f"False Positives (FP): {fp_time}")
 print(f"False Negatives (FN): {fn_time}")
+
+accuracy = accuracy / total_time
+print(f"accuracy: {accuracy}")
