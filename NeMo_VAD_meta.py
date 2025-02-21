@@ -4,10 +4,9 @@ import numpy as np
 import os
 import argparse
 import time
-from utils import smooth_outputs_rnn
+#from utils import smooth_outputs_rnn
 import nemo.collections.asr as nemo_asr
 import librosa
-from utils import smooth_outputs_rnn
 
 import torch
 
@@ -67,10 +66,10 @@ def classify_audio(audio_path):
 
     speech_probabilities = torch.sigmoid(predictions).squeeze().cpu().numpy()
     speech_detected = speech_probabilities[:, 0] < 0.6  # Threshold
-    speech_detected = speech_detected.reshape(1, -1, 1)
-    speech_detected = torch.tensor(speech_detected, dtype=torch.float32)
-    speech_detected = smooth_outputs_rnn(speech_detected, avg_frames=20, criteria=0.5)
-    speech_detected = speech_detected.squeeze()
+    # speech_detected = speech_detected.reshape(1, -1, 1)
+    # speech_detected = torch.tensor(speech_detected, dtype=torch.float32)
+    # speech_detected = smooth_outputs_rnn(speech_detected, avg_frames=20, criteria=0.5)
+    # speech_detected = speech_detected.squeeze()
     
     print(f"speech_detected: {speech_detected.shape}")
     print(f"num of ones: {np.count_nonzero(speech_detected)}")
