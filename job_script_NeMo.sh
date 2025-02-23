@@ -7,8 +7,8 @@ DATADIR=/storage/brno2/home/miapp/fearless-steps-SAD/fearless-steps-SAD
 LOGFILE=$DATADIR/out_NeMo_1.log
 chmod 700 $SCRATCHDIR
 cp -r $DATADIR/* $SCRATCHDIR
-module add mambaforge
-mamba activate /storage/brno2/home/miapp/.conda/envs/nemo
+module add py-pip
+$DATADIR/nemopip/bin/activate
 ls -R $SCRATCHDIR > $DATADIR/debugprint
 cd $SCRATCHDIR
 echo "cuda exists?:"
