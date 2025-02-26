@@ -42,7 +42,7 @@ print("CUDA device count:", torch.cuda.device_count())
 
 # hyperparameters
 input_size = 30
-hidden_size = 512
+hidden_size = 256
 epochs = 3 if debug else 20
 # batch_size = 1
 criteria = 0.5
@@ -52,10 +52,8 @@ num_layers = 2
 shuffle_batches = True
 audio_size = 10000
 num_heads = 8
-overlap = 200
+overlap = 100
 
-
-data_loader = load.LoadAudio(debug=debug, input_size=input_size, frame_length=frame_length)
 
 data_loader = load.LoadAudio(debug=debug, input_size=input_size, frame_length=frame_length)
 
@@ -116,8 +114,9 @@ for f_test in range(1):
         print(f"X_dev[0] shape: {X_dev[0].shape}")
         
         for num_layers in [6]:
-            for hidden_size in [128, 256, 512]:
-                for learning_rate in [0.001, 0.0001, 0.00001]: #[0.001, 0.0001, 0.00001]:
+            for hidden_size in [128, 256]:
+                for learning_rate in [0.001, 0.0001]: #[0.001, 0.0001, 0.00001]:
+                    
                     print(f"\n\nbatch_size: {batch_size}, sequence_size: {audio_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}, num_layers: {num_layers}")
                     #print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
                     
@@ -180,7 +179,7 @@ for f_test in range(1):
                     
                     best_model = torch.load(model_path)
                     
-                    X_val, Y_val, masks = split_file(X_val_loaded, Y_val_loaded, seq_size=audio_size, shuffle=False)
+                    X_val, Y_val, masks = split_file(X_val_loaded, Y_val_loaded, seq_size=audio_size, overlap=overlap, shuffle=False)
                     dataset_val = SADDataset(X_val, Y_val, masks)
                     print(f"X_val length: {len(X_val)}")
                     print(f"X_val[0] shape: {X_val[0].shape}")
