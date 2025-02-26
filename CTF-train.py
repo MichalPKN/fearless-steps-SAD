@@ -54,9 +54,10 @@ shuffle_batches = True
 audio_size = 10000
 num_heads = 4
 overlap = 100
+context_size = 0.025
 
 
-data_loader = load.LoadAudio(debug=debug, input_size=input_size, frame_length=frame_length)
+data_loader = load.LoadAudio(debug=debug, input_size=input_size, frame_length=frame_length, context_size=context_size)
 
 # train data
 X_loaded_all, audio_info, Y_loaded_all = data_loader.load_all(train_path, train_labels)
