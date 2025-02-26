@@ -4,6 +4,7 @@ import librosa
 import numpy as np
 import os
 import load
+from utils import smooth_outputs_rnn
 
 loader = load.LoadAudio()
 
@@ -37,6 +38,10 @@ def classify_audio(audio_path):
 
     speech_probabilities = torch.sigmoid(predictions).squeeze().cpu().numpy()
     speech_detected = speech_probabilities[:, 0] < 0.6  # Threshold
+    speech_detected = speech_detected.reshape(1, -1, 1)
+    speech_detected = torch.tensor(speech_detected, dtype=torch.float32)
+    speech_detected = smooth_outputs_rnn(speech_detected, avg_frames=20, criteria=0.5)
+    speech_detected = speech_detected.squeeze()
     
     print(f"speech_detected: {speech_detected.shape}")
     print(f"num of ones: {np.count_nonzero(speech_detected)}")
@@ -57,7 +62,7 @@ label_path = "FSC_P4_Streams/Transcripts/SAD/Dev/fsc_p4_dev_001.txt"
 
 #label_path = os.path.join(labels_path, labels_path)
 labels, num_of_1s, num_of_0s = loader.add_labels(label_path, vad_results)
-labels = labels.squeeze()[:60000]
+labels = torch.from_numpy(labels.squeeze()[:60000])
 print("added labels")
 print(f"shape: {labels.shape}")
 fp_time = np.count_nonzero((labels == 0) & (vad_results == 1))

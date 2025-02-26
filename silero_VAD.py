@@ -3,10 +3,11 @@ import torchaudio
 import load
 import numpy as np
 import os
+from utils import smooth_outputs_rnn
 
 # model
 vad_model, utils = torch.hub.load('snakers4/silero-vad', 'silero_vad', force_reload=True)
-(get_speech_timestamps, _, _, _, _) = utils
+(get_speech_timestamps, _, read_audio, _, _) = utils
 
 labels_path = "FSC_P4_Streams\\Transcripts\\SAD\\Dev"
 wav_path_o = "FSC_P4_Streams\\Audio\\Streams\\Dev"
@@ -22,14 +23,16 @@ print(f"Loading labels from {labels_path}")
 for i, filename in enumerate(sorted(os.listdir(labels_path))):
 
     wav_path = os.path.join(wav_path_o, filename.replace(".txt", ".wav"))
-    waveform, sample_rate = torchaudio.load(wav_path)
+    sample_rate = 16000
+    waveform = read_audio(wav_path, sampling_rate=sample_rate)
+    print(sample_rate)  
 
     # Apply VAD
     speech_timestamps = get_speech_timestamps(waveform, vad_model, sampling_rate=sample_rate)
 
     # Convert to 10ms frame-level labels
     frame_duration = 0.01  # 10ms
-    num_frames = int(waveform.shape[1] / sample_rate / frame_duration)
+    num_frames = int(waveform.shape[0] / sample_rate / frame_duration)
     vad_labels = np.zeros(num_frames, dtype=int)  # Initialize all as non-speech
 
     for segment in speech_timestamps:
@@ -55,6 +58,9 @@ for i, filename in enumerate(sorted(os.listdir(labels_path))):
     y_speech_time += (labels == 1).sum()
     y_nonspeech_time += (labels == 0).sum()
     
+    accuracy = (labels == vad_labels).sum() / len(labels)
+    print(f"accuracy: {accuracy}")
+    
     break
 
 pfp = fp_time / y_nonspeech_time # false alarm
@@ -68,6 +74,27 @@ print(f"Total Non-Speech Frames: {y_nonspeech_time}")
 print(f"PFP: {pfp}, PFN: {pfn}")
 
 print(f"DCF: {dcf*100:.4f}%")
+
+import matplotlib.pyplot as plt
+
+
+time_axis = np.arange(len(labels)) * 0.01
+
+plt.figure(figsize=(12, 6))
+
+plt.plot(time_axis, labels, label="Actual", color="black", linestyle="dotted", alpha=0.7)
+
+plt.plot(time_axis, vad_labels, label="Predicted", color="blue", alpha=0.7)
+
+#plt.plot(time_axis, speech_probs[:, 0], label="Speech Probability", color="red", alpha=0.5)
+
+plt.xlabel("Time (seconds)")
+plt.ylabel("Speech Activity")
+plt.title("Actual vs Predicted Speech Activity")
+plt.legend()
+plt.grid()
+
+plt.savefig("vad_results.png", dpi=300, bbox_inches="tight")
 
 # import torch
 # import torchaudio
