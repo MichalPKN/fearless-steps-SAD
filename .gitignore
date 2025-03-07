@@ -7,8 +7,9 @@ backup*
 models/
 Training_*
 debugprint
-tmp/
+tmp*
 vad_results.png
+just-surge*
 
 
 ## PyTorch
