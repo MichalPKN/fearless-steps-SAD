@@ -58,7 +58,7 @@ context_size = 0.025
 
 
 for context_size in [0.01, 0.025, 0.05]:
-    for input_size in [12, 20, 40]:
+    for input_size in [30]:
 
 
         data_loader = load.LoadAudio(debug=debug, input_size=input_size, frame_length=frame_length, context_size=context_size)
