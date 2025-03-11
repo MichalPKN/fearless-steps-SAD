@@ -47,7 +47,7 @@ hidden_size = 256
 epochs = 3 if debug else 20
 # batch_size = 1
 criteria = 0.5
-# learning_rate = 0.001
+learning_rate = 0.0005
 frame_length = 0.01
 num_layers = 2
 shuffle_batches = True
@@ -104,7 +104,7 @@ gc.collect()
 # training
 test_num = 1
 for f_test in range(1):
-    for batch_size, audio_size, overlap in [[10, 500, 100], [20, 500, 100], [40, 500, 100], [10, 1000, 200], [20, 1000, 200], [40, 1000, 200], [10, 250, 50], [20, 250, 50], [40, 250, 50]]:
+    for batch_size, audio_size, overlap in [[10, 250, 50]]:
         print(f"\nsplitting, padding, etc. all data to batch size {batch_size}, audio size {audio_size}, overlap {overlap}")
         X, Y, masks = split_file(X_loaded, Y_loaded, seq_size=audio_size, overlap=overlap, shuffle=False) #TODO: use in all
         dataset = SADDataset(X, Y, masks)
@@ -119,13 +119,9 @@ for f_test in range(1):
         print(f"X_dev length: {len(X_dev)}")
         print(f"X_dev[0] shape: {X_dev[0].shape}")
         
-        for num_layers in [6]:
-            for hidden_size in [128]:
-                for learning_rate in [0.0005]: #[0.001, 0.0001, 0.00001]:
-                    
-                    if num_layers == 2 and hidden_size != 512:
-                        continue
-                    
+        for hidden_size in [128, 512]:
+            for num_layers in [2, 4, 6]:
+                for num_heads in [2, 4, 6]:                    
                     print(f"\n\nbatch_size: {batch_size}, sequence_size: {audio_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}, num_layers: {num_layers}")
                     #print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
                     
