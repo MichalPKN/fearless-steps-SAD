@@ -121,7 +121,7 @@ for f_test in range(1):
         
         for hidden_size in [128, 512]:
             for num_layers in [2, 4, 6]:
-                for num_heads in [2, 4, 6]:                    
+                for num_heads in [2, 4, 8]:                    
                     print(f"\n\nbatch_size: {batch_size}, sequence_size: {audio_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}, num_layers: {num_layers}")
                     #print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
                     
