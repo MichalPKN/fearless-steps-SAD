@@ -18,6 +18,8 @@ fp_time = 0
 fn_time = 0
 y_speech_time = 0
 y_nonspeech_time = 0
+correct_count = 0
+y_time = 0
 loader = load.LoadAudio()
 print(f"Loading labels from {labels_path}")
 for i, filename in enumerate(sorted(os.listdir(labels_path))):
@@ -57,15 +59,14 @@ for i, filename in enumerate(sorted(os.listdir(labels_path))):
     fn_time += np.count_nonzero((labels == 1) & (vad_labels == 0))
     y_speech_time += (labels == 1).sum()
     y_nonspeech_time += (labels == 0).sum()
-    
-    accuracy = (labels == vad_labels).sum() / len(labels)
-    print(f"accuracy: {accuracy}")
-    
+    correct_count += np.count_nonzero(labels == vad_labels)
+    y_time += len(labels)
     break
 
 pfp = fp_time / y_nonspeech_time # false alarm
 pfn = fn_time / y_speech_time # miss
 dcf = 0.75 * pfn + 0.25 * pfp
+accuracy = correct_count / y_time
 
 print(f"False Positives (FP): {fp_time}")
 print(f"False Negatives (FN): {fn_time}")
@@ -74,6 +75,7 @@ print(f"Total Non-Speech Frames: {y_nonspeech_time}")
 print(f"PFP: {pfp}, PFN: {pfn}")
 
 print(f"DCF: {dcf*100:.4f}%")
+print(f"Accuracy: {accuracy*100:.4f}%")
 
 import matplotlib.pyplot as plt
 

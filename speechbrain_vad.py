@@ -24,27 +24,22 @@ loader = load.LoadAudio()
 
 def classify(audio_path):
 
-    # Load 8 kHz audio
+    # 8 kHz
     waveform = read_audio("FSC_P4_Streams/Audio/Streams/Dev/fsc_p4_dev_001.wav")
     waveform = waveform.unsqueeze(0)  # Add batch dimension
 
-    # Resample to 16 kHz
+    # 16 kHz
     resampler = torchaudio.transforms.Resample(orig_freq=8000, new_freq=16000)
     resampled_waveform = resampler(waveform)
 
-
-
-    # Convert waveform to the expected format (batch, time)
-    resampled_waveform = resampled_waveform.squeeze(0)  # Remove batch dim if needed
-
+    resampled_waveform = resampled_waveform.squeeze(0)
     speech_probs = vad.get_speech_prob_chunk(resampled_waveform)
 
-    # Apply a threshold to detect speech segments
-    threshold = 0.5  # Adjust this threshold as needed
+    threshold = 0.5
     speech_segments = (speech_probs > threshold).float()
 
-    speech_segments = speech_segments.squeeze()  # Remove batch dim
-    speech_probs = speech_probs.squeeze()  # Remove batch dim
+    speech_segments = speech_segments.squeeze()
+    speech_probs = speech_probs.squeeze()
 
     # sample_rate = 16000
     # Print out speech segments (start and end times)
