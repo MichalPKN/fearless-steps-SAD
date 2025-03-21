@@ -39,12 +39,12 @@ class SADModel(nn.Module):
         x = self.conv2(x)
         x = self.bn2(x)
         x = self.relu(x)
-        #x = self.pool(x)
+        x = self.pool(x)
         
         x = self.conv3(x)
         x = self.bn3(x)
         x = self.relu(x)
-        #x = self.pool(x)
+        x = self.pool(x)
         
         #flatten
         batch_size, channels, seq_len, pooled_mfcc = x.shape
