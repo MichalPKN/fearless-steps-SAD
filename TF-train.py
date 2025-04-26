@@ -113,112 +113,113 @@ for f_test in range(1):
         print(f"X_dev length: {len(X_dev)}")
         print(f"X_dev[0] shape: {X_dev[0].shape}")
         
-        for num_layers in [2, 4, 6]:
-            for hidden_size in [128, 256]:
-                for learning_rate in [0.001, 0.0001]: #[0.001, 0.0001, 0.00001]:
-                    
-                    print(f"\n\nbatch_size: {batch_size}, sequence_size: {audio_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}, num_layers: {num_layers}")
-                    #print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
-                    
-                    # model
-                    # embedding_size = hidden_size
-                    sad_model = model_sad.SADModel(input_size, embed_size=hidden_size, num_heads=num_heads, num_layers=num_layers, seq_length=audio_size).to(device)
-                    if torch.cuda.device_count() > 1:
-                        print(f"Using {torch.cuda.device_count()} GPUs")
-                        sad_model = torch.nn.DataParallel(sad_model)
-                    print("Model's state_dict:")
-                    for param_tensor in sad_model.state_dict():
-                        print(param_tensor, "\t", sad_model.state_dict()[param_tensor].size())
+        for num_layers in [4, 2]:
+            for num_heads in [2, 4, 8]:
+                for hidden_size in [128, 256]:
+                    for learning_rate in [0.001, 0.0001]: #[0.001, 0.0001, 0.00001]:
                         
-                    # weight
-                    one_ratio = audio_info[0] / audio_info[2]
-                    zero_ratio = audio_info[1] / audio_info[2]
-                    print(f"one_ratio: {one_ratio}, zero_ratio: {zero_ratio}")
-                    if f_test == 1:
-                        print("-----------------")
-                        print("No weight test")
-                        print("-----------------")
-                        criterion = torch.nn.BCEWithLogitsLoss(reduction='none')
-                    else:
-                        pos_weight = torch.tensor(audio_info[1] / audio_info[0]).to(device)
-                        print("pos_weight: ", pos_weight)
-                        criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight, reduction='none')
-                    
-                    optimizer = torch.optim.Adam(sad_model.parameters(), lr=learning_rate)
-                    
-                    best_val = 100
-                    model_path = os.path.join(datadir_path, "models", f"model_tf_{batch_size}-{audio_size}_{learning_rate}_{hidden_size}_{num_layers}.pt")
+                        print(f"\n\nbatch_size: {batch_size}, sequence_size: {audio_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}, num_layers: {num_layers}")
+                        #print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
+                        
+                        # model
+                        # embedding_size = hidden_size
+                        sad_model = model_sad.SADModel(input_size, embed_size=hidden_size, num_heads=num_heads, num_layers=num_layers, seq_length=audio_size).to(device)
+                        if torch.cuda.device_count() > 1:
+                            print(f"Using {torch.cuda.device_count()} GPUs")
+                            sad_model = torch.nn.DataParallel(sad_model)
+                        print("Model's state_dict:")
+                        for param_tensor in sad_model.state_dict():
+                            print(param_tensor, "\t", sad_model.state_dict()[param_tensor].size())
+                            
+                        # weight
+                        one_ratio = audio_info[0] / audio_info[2]
+                        zero_ratio = audio_info[1] / audio_info[2]
+                        print(f"one_ratio: {one_ratio}, zero_ratio: {zero_ratio}")
+                        if f_test == 1:
+                            print("-----------------")
+                            print("No weight test")
+                            print("-----------------")
+                            criterion = torch.nn.BCEWithLogitsLoss(reduction='none')
+                        else:
+                            pos_weight = torch.tensor(audio_info[1] / audio_info[0]).to(device)
+                            print("pos_weight: ", pos_weight)
+                            criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight, reduction='none')
+                        
+                        optimizer = torch.optim.Adam(sad_model.parameters(), lr=learning_rate)
+                        
+                        best_val = 100
+                        model_path = os.path.join(datadir_path, "models", f"model_tf_{batch_size}-{audio_size}_{learning_rate}_{hidden_size}_{num_layers}.pt")
 
-                    # training
-                    load_time = time.time() - start_time
-                    print(f"Data loaded in {load_time:.2f} seconds, {load_time/60:.2f} minutes")
+                        # training
+                        load_time = time.time() - start_time
+                        print(f"Data loaded in {load_time:.2f} seconds, {load_time/60:.2f} minutes")
 
-                    print("training model")
-                    # i = 1
-                    losses = np.zeros(epochs)
-                    for epoch in range(epochs):
-                        # train
-                        losses, dcf = train_model(sad_model=sad_model, optimizer=optimizer, 
-                                                  criterion=criterion, X_size=len(X), criteria=criteria, epochs=epochs,
-                                                  device=device, dataloader=dataloader, losses=losses, epoch=epoch)
+                        print("training model")
+                        # i = 1
+                        losses = np.zeros(epochs)
+                        for epoch in range(epochs):
+                            # train
+                            losses, dcf = train_model(sad_model=sad_model, optimizer=optimizer, 
+                                                    criterion=criterion, X_size=len(X), criteria=criteria, epochs=epochs,
+                                                    device=device, dataloader=dataloader, losses=losses, epoch=epoch)
+                            
+                            # dev
+                            dev_accuracy, dev_dcf, best_smooth_window_dcf, top_smooth_window = validate_model(
+                                            sad_model=sad_model, dataloader_dev=dataloader_dev, criteria=criteria, device=device)
                         
-                        # dev
-                        dev_accuracy, dev_dcf, best_smooth_window_dcf, top_smooth_window = validate_model(
-                                        sad_model=sad_model, dataloader_dev=dataloader_dev, criteria=criteria, device=device)
-                    
-                        if dev_dcf < best_val:
-                            best_val = dev_dcf
-                            dcf_train = dcf
-                            dcf_dev = dev_dcf
-                            dcf_dev_smooth = best_smooth_window_dcf
-                            best_smooth_window = top_smooth_window
-                            torch.save(sad_model, model_path)
-                                
-                    # evaluation
-                    print("\nEVALUTAION")
-                    
-                    best_model = torch.load(model_path)
-                    
-                    X_val, Y_val, masks = split_file(X_val_loaded, Y_val_loaded, seq_size=audio_size, overlap=overlap, shuffle=False)
-                    dataset_val = SADDataset(X_val, Y_val, masks)
-                    print(f"X_val length: {len(X_val)}")
-                    print(f"X_val[0] shape: {X_val[0].shape}")
-                    dataloader_val = DataLoader(dataset_val, batch_size=1, shuffle=False)
-                    
-                    # eval
-                    eval_accuracy, eval_dcf, eval_dcf_smooth, toshow_y, toshow_preds, toshow_outputs, toshow_additional = evaluate_model(
-                        best_model=best_model, dataloader_val=dataloader_val, criteria=criteria, device=device, best_smooth_window=best_smooth_window)                
+                            if dev_dcf < best_val:
+                                best_val = dev_dcf
+                                dcf_train = dcf
+                                dcf_dev = dev_dcf
+                                dcf_dev_smooth = best_smooth_window_dcf
+                                best_smooth_window = top_smooth_window
+                                torch.save(sad_model, model_path)
+                                    
+                        # evaluation
+                        print("\nEVALUTAION")
                         
-                    print("finished training model")
-                    training_time = time.time() - start_time - load_time
-                    print(f"Training completed in {training_time:.2f} seconds, {training_time/60:.2f} minutes, {training_time/3600:.2f} hours")
-                    print(f"losses: {losses}")
-                    
-                    torch.cuda.empty_cache()
-                    
-                    if debug:
-                        path = os.path.join(datadir_path, "plots_rnn")
-                    else:
-                        path = "/storage/brno2/home/miapp/fearless-steps-SAD/fearless-steps-SAD/plots_rnn"
-                    
-                    plot_result(toshow_y.cpu().numpy(), toshow_preds.cpu().numpy(), toshow_outputs.cpu().detach().numpy(), toshow_additional.cpu().detach().numpy(), \
-                                path=path, file_name="sad_prediction_comparison_hp_" + str(test_num) + ".png", debug=False, \
-                                title=f"batch_size: {batch_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
-                    test_num += 1
-                    print("\n----------------------------------------\n\n\n")
-                    
-                    print("\n----------------------------------------\n")
-        
-                    print("results:")
-                    print(f"parameters: batch_size: {batch_size}, audio_size: {audio_size}, overlap: {overlap}, hidden_size: {hidden_size}, num_layers: {num_layers}, learning_rate: {learning_rate}")
-                    print("train\tdev\tdev_sm\teval\teval_sm\tsm_window")
-                    print(f"{dcf_train*100:.4f}\t{dcf_dev*100:.4f}\t{dcf_dev_smooth*100:.4f}\t{eval_dcf*100:.4f}\t{eval_dcf_smooth*100:.4f}\t{best_smooth_window}")
-                    
-                    print("\n----------------------------------------\n\n\n")
-                    
-        del sad_model, best_model, dataset, dataset_dev, dataset_val, dataloader, dataloader_dev, dataloader_val
-        del X, Y, X_dev, Y_dev, X_val, Y_val
-        gc.collect()
+                        best_model = torch.load(model_path, weights_only=False)
+                        
+                        X_val, Y_val, masks = split_file(X_val_loaded, Y_val_loaded, seq_size=audio_size, overlap=overlap, shuffle=False)
+                        dataset_val = SADDataset(X_val, Y_val, masks)
+                        print(f"X_val length: {len(X_val)}")
+                        print(f"X_val[0] shape: {X_val[0].shape}")
+                        dataloader_val = DataLoader(dataset_val, batch_size=1, shuffle=False)
+                        
+                        # eval
+                        eval_accuracy, eval_dcf, eval_dcf_smooth, toshow_y, toshow_preds, toshow_outputs, toshow_additional = evaluate_model(
+                            best_model=best_model, dataloader_val=dataloader_val, criteria=criteria, device=device, best_smooth_window=best_smooth_window)                
+                            
+                        print("finished training model")
+                        training_time = time.time() - start_time - load_time
+                        print(f"Training completed in {training_time:.2f} seconds, {training_time/60:.2f} minutes, {training_time/3600:.2f} hours")
+                        print(f"losses: {losses}")
+                        
+                        torch.cuda.empty_cache()
+                        
+                        if debug:
+                            path = os.path.join(datadir_path, "plots_rnn")
+                        else:
+                            path = "/storage/brno2/home/miapp/fearless-steps-SAD/fearless-steps-SAD/plots_rnn"
+                        
+                        plot_result(toshow_y.cpu().numpy(), toshow_preds.cpu().numpy(), toshow_outputs.cpu().detach().numpy(), toshow_additional.cpu().detach().numpy(), \
+                                    path=path, file_name="sad_prediction_comparison_hp_" + str(test_num) + ".png", debug=False, \
+                                    title=f"batch_size: {batch_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}")
+                        test_num += 1
+                        print("\n----------------------------------------\n\n\n")
+                        
+                        print("\n----------------------------------------\n")
+            
+                        print("results:")
+                        print(f"parameters: batch_size: {batch_size}, audio_size: {audio_size}, overlap: {overlap}, hidden_size: {hidden_size}, num_layers: {num_layers}, learning_rate: {learning_rate}")
+                        print("train\tdev\tdev_sm\teval\teval_sm\tsm_window")
+                        print(f"{dcf_train*100:.4f}\t{dcf_dev*100:.4f}\t{dcf_dev_smooth*100:.4f}\t{eval_dcf*100:.4f}\t{eval_dcf_smooth*100:.4f}\t{best_smooth_window}")
+                        
+                        print("\n----------------------------------------\n\n\n")
+                        
+            del sad_model, best_model, dataset, dataset_dev, dataset_val, dataloader, dataloader_dev, dataloader_val
+            del X, Y, X_dev, Y_dev, X_val, Y_val
+            gc.collect()
         
 print(f"Total time: {time.time() - start_time:.2f} seconds, {training_time/60:.2f} minutes, {training_time/3600:.2f} hours")
 print("\n----------------------------------------\n\n\n")
