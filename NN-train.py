@@ -98,7 +98,7 @@ test_num = 1
 for f_test in range(1):
     batch_size = 10
     overlap = 0
-    for audio_size in [5, 10, 25, 50, 100, 250, 500]: #[10, 500, 0], [10, 250, 0], 
+    for audio_size in [500, 250, 100, 50, 25, 10, 5]: #[5, 10, 25, 50, 100, 250, 500]:
         print(f"\nsplitting, padding, etc. all data to batch size {batch_size}, audio size {audio_size}, overlap {overlap}")
         X, Y, masks = split_file(X_loaded, Y_loaded, seq_size=audio_size, overlap=overlap, shuffle=False) #TODO: use in all
         dataset = SADDataset(X, Y, masks)
