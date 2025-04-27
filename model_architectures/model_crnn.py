@@ -18,7 +18,7 @@ class SADModel(nn.Module):
         self.relu = nn.ReLU()
         
         self.lstm = nn.LSTM(
-            input_size=(input_size // 4) * filter_num,
+            input_size=(input_size // 8) * filter_num,
             hidden_size=hidden_size, 
             num_layers=num_layers, 
             batch_first=True,
