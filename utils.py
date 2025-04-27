@@ -10,47 +10,34 @@ import librosa
 
 def plot_result(y_actual, y_pred, processed_predictions=None, additional=None, path="", file_name="sad_prediction_comparison.png", debug=False, title="actual vs predictions"):    
     # Plotting in subplots
-    fig, axs = plt.subplots(3, 1, figsize=(15, 10))
+    fig, axs = plt.subplots(2, 1, figsize=(15, 10))
 
-    # Plot the actual labels
-    axs[0].plot(y_actual, label="Actual", color="green")
-    axs[0].set_ylabel("Actual")
-    axs[0].legend(loc="upper right")
 
-    # Plot the raw and smoothed predictions
-    axs[1].plot(y_pred, label="Predictions", color="blue", alpha=0.5)
+    # Plot smoothed predictions
+    #axs[0].plot(y_pred, label="Predikce", color="blue", alpha=0.5)
     if processed_predictions is not None:
-        axs[1].plot(processed_predictions, label="Outputs", color="red", linestyle='--')
-    axs[1].set_ylabel("Predictions")
-    axs[1].legend(loc="upper right")
+        axs[0].plot(processed_predictions, label="výstup modelu", color="red", linestyle='--')
+    #axs[0].set_ylabel("P")
+    #axs[0].legend(loc="lower right")
+    
+    
+    # Plot actual labels
+    axs[0].plot(y_actual, label="pravdivé výsledky", color="green", alpha=0.5)
+    #axs[0].set_ylabel("výstup modelu a pravdivé výsledky")
+    axs[0].set_title("výstup modelu a pravdivé výsledky")
+    # axs[0].legend(loc="lower center")
 
-    # Plot the difference (absolute error)
-    # difference = np.abs(y_actual - y_pred)
-    # axs[2].plot(difference, label="Absolute Difference", color="purple")
-    # axs[2].set_ylabel("Difference")
-    # axs[2].set_xlabel("Time Steps")
-    # axs[2].legend(loc="upper right")
-    # y = additional[1]
-    # sr = additional[2]
-    # if additional is not None:
-    #     S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, fmax=8000)
-    #     S_dB = librosa.power_to_db(S, ref=np.max)
+    axs[1].imshow(additional.T, aspect='auto', cmap='jet', origin='lower')
+    axs[1].set_ylabel("Koeficient")
+    axs[1].set_xlabel("příznak (10ms)")
+    axs[1].set_title("MFCC")
+    
+    x_lim = axs[1].get_xlim()
+    axs[0].set_xlim(x_lim)
 
-    #     img = librosa.display.specshow(S_dB, sr=sr, x_axis='time', y_axis='mel', cmap='coolwarm', ax=axs[2])
-    #     img = librosa.display.specshow(S_dB, sr=sr, x_axis='time', y_axis='mel', cmap='coolwarm', ax=axs[2])
-    #     fig.colorbar(img, ax=axs[2], format='%+2.0f dB')
-    #     axs[2].set_xlabel("Time")
-    #     axs[2].set_ylabel("Frequency (Hz)")
-
-    if additional is not None:
-        axs[2].plot(additional, label="Smoothed", color="blue", alpha=0.5)
-    if processed_predictions is not None:
-        axs[2].plot(processed_predictions, label="Outputs", color="red", linestyle='--', alpha=0.5)
-    axs[2].set_ylabel("Predictions")
-    axs[2].legend(loc="upper right")
-
+    #plt.subplots_adjust(hspace=2)
     plt.suptitle(title)
-    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    plt.tight_layout(pad=2.0, rect=[0, 0.03, 1, 0.95])
     plt.savefig(os.path.join(path, file_name))
     if debug:
         plt.show()
