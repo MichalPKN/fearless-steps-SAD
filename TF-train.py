@@ -113,7 +113,7 @@ for f_test in range(1):
         print(f"X_dev length: {len(X_dev)}")
         print(f"X_dev[0] shape: {X_dev[0].shape}")
         
-        for num_layers in [4, 2]:
+        for num_layers in [2]:
             for num_heads in [2, 4, 8]:
                 for hidden_size in [128, 256]:
                     for learning_rate in [0.001, 0.0001]: #[0.001, 0.0001, 0.00001]:
@@ -217,9 +217,9 @@ for f_test in range(1):
                         
                         print("\n----------------------------------------\n\n\n")
                         
-            del sad_model, best_model, dataset, dataset_dev, dataset_val, dataloader, dataloader_dev, dataloader_val
-            del X, Y, X_dev, Y_dev, X_val, Y_val
-            gc.collect()
+        del sad_model, best_model, dataset, dataset_dev, dataset_val, dataloader, dataloader_dev, dataloader_val
+        del X, Y, X_dev, Y_dev, X_val, Y_val
+        gc.collect()
         
 print(f"Total time: {time.time() - start_time:.2f} seconds, {training_time/60:.2f} minutes, {training_time/3600:.2f} hours")
 print("\n----------------------------------------\n\n\n")
