@@ -50,9 +50,9 @@ criteria = 0.5
 frame_length = 0.01
 num_layers = 2
 shuffle_batches = True
-audio_size = 10000
+audio_size = 1000
 num_heads = 8
-overlap = 100
+overlap = 200
 
 
 data_loader = load.LoadAudio(debug=debug, input_size=input_size, frame_length=frame_length)
@@ -113,8 +113,10 @@ for f_test in range(1):
         print(f"X_dev length: {len(X_dev)}")
         print(f"X_dev[0] shape: {X_dev[0].shape}")
         
-        for num_layers in [6]:
-            for hidden_size in [128, 256]:
+        for num_heads in [4, 8]:
+            hidden_size = 128
+            num_layers = 4
+            for k in [128, 256, 512, 1024]:
                 for learning_rate in [0.001, 0.0001]: #[0.001, 0.0001, 0.00001]:
                     
                     print(f"\n\nbatch_size: {batch_size}, sequence_size: {audio_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}, num_layers: {num_layers}")
