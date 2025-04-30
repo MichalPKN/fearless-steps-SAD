@@ -56,6 +56,9 @@ num_heads = 4
 overlap = 100
 context_size = 0.025
 
+context_size = None
+input_size = 30
+
 
 # for context_size in [0.01, 0.025, 0.05]:
 #     for input_size in [30]:
@@ -104,7 +107,7 @@ gc.collect()
 # training
 test_num = 1
 for f_test in range(1):
-    for batch_size, audio_size, overlap in [[10, 250, 50]]:
+    for batch_size, audio_size, overlap in [[10, 1000, 200]]:
         print(f"\nsplitting, padding, etc. all data to batch size {batch_size}, audio size {audio_size}, overlap {overlap}")
         X, Y, masks = split_file(X_loaded, Y_loaded, seq_size=audio_size, overlap=overlap, shuffle=False) #TODO: use in all
         dataset = SADDataset(X, Y, masks)
@@ -119,9 +122,10 @@ for f_test in range(1):
         print(f"X_dev length: {len(X_dev)}")
         print(f"X_dev[0] shape: {X_dev[0].shape}")
         
-        for hidden_size in [128, 512]:
-            for num_layers in [2, 4, 6]:
-                for num_heads in [2, 4, 8]:                    
+        for hidden_size in [128, 256, 512]:
+            for num_heads in [4, 8]:
+                num_layers = 4
+                for learning_rate in [0.001, 0.0001]:                    
                     print(f"\n\nbatch_size: {batch_size}, sequence_size: {audio_size}, learning_rate: {learning_rate}, hidden_size: {hidden_size}, num_layers: {num_layers}")
                     #print(f"X length: {len(X)}, X_dev length {len(X_dev)}")
                     
