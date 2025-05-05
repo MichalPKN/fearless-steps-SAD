@@ -78,7 +78,7 @@ for i, filename in enumerate(sorted(os.listdir(labels_path))):
     correct_count += np.count_nonzero(labels == vad_results)
     if brakee:
         break
-    #brakee = True
+    brakee = True
 
 pfp = fp_time / y_nonspeech_time # false alarm
 pfn = fn_time / y_speech_time # miss
@@ -94,33 +94,20 @@ print(f"accuracy: {accuracy}")
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Plot the speech probabilities
-plt.figure(figsize=(12, 6))
 
-# Plot the speech probabilities
-plt.subplot(3, 1, 1)
-plt.plot(speech_probs.numpy(), label='Speech Probabilities', color='blue')
-plt.axhline(y=0.5, color='red', linestyle='--', label='Threshold')
-plt.title('Speech Probabilities Over Time')
-plt.xlabel('Time (frames)')
-plt.ylabel('Probability')
-plt.legend()
+x_vals = np.arange(0, 120000 - 110000) / 100  # convert index to milliseconds
 
-# Plot the detected speech segments
-plt.subplot(3, 1, 2)
-plt.plot(speech_segments.numpy(), label='Speech Segments', color='green', drawstyle='steps-post')
-plt.title('Detected Speech Segments')
-plt.xlabel('Time (frames)')
-plt.ylabel('Speech (1) / No Speech (0)')
-plt.legend()
+fig, axs = plt.subplots(2, 1, figsize=(12, 6))
 
-# Plot the acutal
-plt.subplot(3, 1, 3)
-plt.plot(labels.numpy(), label='actual labels', color='red', drawstyle='steps-post')
-plt.title('Actual labels')
-plt.xlabel('Time (frames)')
-plt.ylabel('Speech (1) / No Speech (0)')
-plt.legend()
+axs[0].plot(x_vals, speech_segments.numpy()[110000:120000], label="Predikce modelu", color="green", alpha=0.8)
+axs[0].plot(x_vals, speech_probs.numpy()[110000:120000], label="Výstup modelu", color="blue", linestyle='--', alpha=0.5)
+axs[0].set_title("Výstupy detekce řeči SpeechBrain")
+axs[0].set_xlabel("Čas [s]")
+axs[0].legend()
+
+axs[1].plot(x_vals, labels.numpy()[110000:120000], color="red")
+axs[1].set_title("Skutečné výskyty řeči")
+axs[1].set_xlabel("Čas [s]")
 
 plt.tight_layout()
 plt.show()

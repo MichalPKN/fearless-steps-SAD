@@ -10,26 +10,34 @@ import librosa
 
 def plot_result(y_actual, y_pred, processed_predictions=None, additional=None, path="", file_name="sad_prediction_comparison.png", debug=False, title="actual vs predictions"):    
     # Plotting in subplots
-    fig, axs = plt.subplots(2, 1, figsize=(15, 10))
+    fig, axs = plt.subplots(2, 1, figsize=(12, 6))
 
 
-    # Plot smoothed predictions
-    #axs[0].plot(y_pred, label="Predikce", color="blue", alpha=0.5)
-    if processed_predictions is not None:
-        axs[0].plot(processed_predictions, label="výstup modelu", color="red", linestyle='--')
-    #axs[0].set_ylabel("P")
-    #axs[0].legend(loc="lower right")
+    # # Plot smoothed predictions
+    # #axs[0].plot(y_pred, label="Predikce", color="blue", alpha=0.5)
+    # if processed_predictions is not None:
+    #     axs[0].plot(processed_predictions, label="výstup modelu", color="red", linestyle='--')
+    # #axs[0].set_ylabel("P")
+    # #axs[0].legend(loc="lower right")
     
     
-    # Plot actual labels
-    axs[0].plot(y_actual, label="pravdivé výsledky", color="green", alpha=0.5)
-    #axs[0].set_ylabel("výstup modelu a pravdivé výsledky")
-    axs[0].set_title("výstup modelu a pravdivé výsledky")
-    # axs[0].legend(loc="lower center")
+    # # Plot actual labels
+    # axs[0].plot(y_actual, label="pravdivé výsledky", color="green", alpha=0.5)
+    # #axs[0].set_ylabel("výstup modelu a pravdivé výsledky")
+    # axs[0].set_title("výstup modelu a pravdivé výsledky")
+    # # axs[0].legend(loc="lower center")
+    
+    x_vals = np.arange(0, len(y_actual)) / 100
+    
+    axs[0].plot(x_vals, y_actual, label="Predikce modelu", color="green", alpha=0.8)
+    axs[0].plot(x_vals, processed_predictions, label="Výstup modelu", color="blue", linestyle='--', alpha=0.5)
+    axs[0].set_title("Výstup modelu a pravdivé výsledky")
+    axs[0].set_xlabel("Čas [s]")
+    axs[0].legend()
 
-    axs[1].imshow(additional.T, aspect='auto', cmap='jet', origin='lower')
+    axs[1].imshow(x_vals, additional.T, aspect='auto', cmap='jet', origin='lower')
     axs[1].set_ylabel("Koeficient")
-    axs[1].set_xlabel("příznak (10ms)")
+    axs[1].set_xlabel("Čas [s]")
     axs[1].set_title("MFCC")
     
     x_lim = axs[1].get_xlim()
