@@ -89,9 +89,8 @@ for audio_file in dev_files:
     
     vad_results, _ = classify_audio(audio_path)
 
-    # Print results
     print(f"vad_results: {vad_results[:+100]}")
-    print(f"classified: {vad_results.shape}")  # List of True/False for each 10ms segment
+    print(f"classified: {vad_results.shape}") 
 
     label_file = audio_file.split(".")[0] + ".txt"
     label_path = os.join(dev_labels, label_file)

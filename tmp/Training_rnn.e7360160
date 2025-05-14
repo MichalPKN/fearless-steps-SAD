@@ -1,9 +1,0 @@
-Loading cuda/12.6.1-gcc-10.2.1-hplxoqp
-  Loading requirement: libxml2/2.9.13-gcc-10.2.1-ov3wk3g
-/var/spool/pbs/mom_priv/jobs/7360160.pbs-m1.metacentrum.cz.SC: line 18: GPU-f17ed104-112d-9433-1905-f943737ef83d: command not found
-Traceback (most recent call last):
-  File "/scratch.ssd/miapp/job_7360160.pbs-m1.metacentrum.cz/RNN-train.py", line 217, in <module>
-    smooth_preds = smooth_outputs_rnn(preds, avg_frames=window, criteria=criteria)
-  File "/scratch.ssd/miapp/job_7360160.pbs-m1.metacentrum.cz/helper_functions.py", line 130, in smooth_outputs_rnn
-    unfolded = smooth_preds.unfold(dimension=1, size=avg_frames, step=1).mean(dim=-1)
-RuntimeError: maximum size for tensor at dimension 1 is 100 but size is 150

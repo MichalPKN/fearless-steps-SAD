@@ -6,7 +6,6 @@ import load
 import torch
 import os
 
-# Load the pre-trained VAD model
 vad = VAD.from_hparams(source="speechbrain/vad-crdnn-libriparty", savedir="tmpdir")
 
 labels_path = "FSC_P4_Streams\\Transcripts\\SAD\\Dev"
