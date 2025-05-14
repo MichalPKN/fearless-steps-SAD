@@ -14,46 +14,37 @@ vad_model = nemo_asr.models.VoiceActivityDetectionModel.from_pretrained(model_na
 # vad_model.eval()
 # vad_model = vad_model.to(device)
 
-# Function to process and classify a wav file
 def classify_audio(audio_path):
-        # Run VAD
     wav_file = audio_path
     speech_timestamps = vad_model.detect_speech(wav_file)
 
-    # Load audio to get total duration
     audio, sr = librosa.load(wav_file, sr=16000)
-    total_duration = len(audio) / sr  # In seconds
+    total_duration = len(audio) / sr
 
-    # Generate 10ms timestamps
     frame_times = np.arange(0, total_duration, 0.01)  # Time steps: 0.01s (10ms)
     frame_labels = np.zeros_like(frame_times, dtype=int)  # Default: Silence (0)
 
-    # Mark speech frames
     for segment in speech_timestamps:
         start, end = segment["start"], segment["end"]
-        frame_labels[(frame_times >= start) & (frame_times < end)] = 1  # Mark as speech
+        frame_labels[(frame_times >= start) & (frame_times < end)] = 1  # speech
     print(end)
     print(f"frame_labels: {frame_labels.shape}")
     print(f"num of ones: {np.count_nonzero(frame_labels)}")
     print(f"num of zeros: {np.count_nonzero(frame_labels == 0)}")
 
-    # Print results (example: first 50 frames)
     for i in range(1000, 1050):
         print(f"Time {frame_times[i]:.2f}s: {'Speech' if frame_labels[i] == 1 else 'Silence'}")
 
-    # Save results
     return frame_labels[:60000]
 
 audio_path = "FSC_P4_Streams/Audio/Streams/Dev/fsc_p4_dev_001.wav"
 vad_results = classify_audio(audio_path)
 
-# Print results
 print(f"vad_results: {vad_results}")
-print(f"classified: {vad_results.shape}")  # List of True/False for each 10ms segment
+print(f"classified: {vad_results.shape}")
 
 label_path = "FSC_P4_Streams/Transcripts/SAD/Dev/fsc_p4_dev_001.txt"
 
-#label_path = os.path.join(labels_path, labels_path)
 labels, num_of_1s, num_of_0s = loader.add_labels(label_path, vad_results)
 labels = labels.squeeze()[:60000]
 print("added labels")

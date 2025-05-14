@@ -34,13 +34,9 @@ class Embedding(nn.Module):
             nn.Dropout(drop_rate)
         )
 
-    # ----------------------------------------------------------------
     def forward(self, x):
-        # x shape: [batch_size, sequence_length, feature_dim]
-        # Transpose x to [batch_size, feature_dim, sequence_length] for Conv1d
-        x = x.transpose(1, 2)  # Swap sequence_length and feature_dim
-        x = self.net(x)  # Apply the network
-        x = torch.reshape(x, (x.shape[0], x.shape[1], -1))  # Reshape if needed
+        x = self.net(x)
+        x = torch.reshape(x, (x.shape[0], x.shape[1], -1))
         return x
 
 

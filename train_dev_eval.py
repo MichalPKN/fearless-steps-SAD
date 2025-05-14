@@ -123,6 +123,10 @@ def evaluate_model(best_model, dataloader_val, criteria, device, best_smooth_win
         fp_time_smooth = 0
         fn_time_smooth = 0
         i = 0
+        toshow_y = torch.empty(0)
+        toshow_preds = torch.empty(0)
+        toshow_outputs = torch.empty(0)
+        toshow_additional = torch.empty(0)
         for batch_x, batch_y, mask in dataloader_val:
             batch_x, batch_y, mask = batch_x.to(device), batch_y.to(device), mask.to(device)
             outputs = best_model(batch_x)
@@ -140,11 +144,13 @@ def evaluate_model(best_model, dataloader_val, criteria, device, best_smooth_win
             fp_time_smooth += (((smooth_preds == 1) & (batch_y == 0)) * mask).sum().item()
             fn_time_smooth += (((smooth_preds == 0) & (batch_y == 1)) * mask).sum().item()
             
-            if i == 5:
-                toshow_y = batch_y[0]
-                toshow_preds = preds[0]
-                toshow_outputs = outputs[0]
-                toshow_additional = smooth_preds[0]
+            if i in range(34, (46 - 8)):
+                print(f"i: {i}, mask sum: {mask.sum()}")
+                mask_indices = mask.nonzero(as_tuple=True)[0]
+                toshow_y = torch.cat((toshow_y, batch_y[mask_indices][0]), 0)
+                toshow_preds = torch.cat((toshow_preds, smooth_preds[mask_indices][0]), 0)
+                toshow_outputs = torch.cat((toshow_outputs, outputs[mask_indices][0]), 0)
+                toshow_additional = torch.cat((toshow_additional, batch_x[mask_indices][0]), 0)
             i += 1
         eval_accuracy = correct_predictions / total_predictions
         pfp = fp_time / y_nonspeech_time # false alarm

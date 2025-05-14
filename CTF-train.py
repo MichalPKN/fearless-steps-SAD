@@ -66,32 +66,41 @@ input_size = 30
 
 data_loader = load.LoadAudio(debug=debug, input_size=input_size, frame_length=frame_length, context_size=context_size)
 
-# train data
-X_loaded_all, audio_info, Y_loaded_all = data_loader.load_all(train_path, train_labels)
-if debug:
-    X_loaded_all = [x[:20030] for x in X_loaded_all]
-    Y_loaded_all = [y[:20030] for y in Y_loaded_all]
+# # train data
+# X_loaded_all, audio_info, Y_loaded_all = data_loader.load_all(train_path, train_labels)
+# if debug:
+#     X_loaded_all = [x[:20030] for x in X_loaded_all]
+#     Y_loaded_all = [y[:20030] for y in Y_loaded_all]
 
-# train test split
-print(f"num of data before train dev split: {len(X_loaded_all)}")
-#dev_idxs = [1] if debug else [5, 18, 27, 43, 68, 91, 112, 129]
-dev_idxs = [1] if debug else [5, 12, 18, 27, 43, 56, 68, 91, 112, 129]
-train_idxs = [i for i in range(len(X_loaded_all)) if i not in dev_idxs]
-X_dev_loaded = [X_loaded_all[i] for i in dev_idxs]
-Y_dev_loaded = [Y_loaded_all[i] for i in dev_idxs]
-dev_files_info = [[audio_info[3][i] for i in dev_idxs], [audio_info[4][i] for i in dev_idxs]]
-X_loaded = [X_loaded_all[i] for i in train_idxs]
-Y_loaded = [Y_loaded_all[i] for i in train_idxs]
-train_files_info = [[audio_info[j][i] for i in train_idxs] for j in [3, 4]]
-print(f"dev data: {dev_idxs}")
-print(f"num of trainig data: {len(X_loaded)}, num of dev data: {len(X_dev_loaded)}")
-print("dev files:")
-for i in range(len(dev_idxs)):
-    print(f"{dev_files_info[0][i]}, {dev_files_info[1][i]}")
-# print("train files:")
-# for i in range(len(X_loaded)):
-#     print(f"{train_files_info[0][i]}, {train_files_info[1][i]}")
+# # train test split
+# print(f"num of data before train dev split: {len(X_loaded_all)}")
+# #dev_idxs = [1] if debug else [5, 18, 27, 43, 68, 91, 112, 129]
+# dev_idxs = [1] if debug else [5, 12, 18, 27, 43, 56, 68, 91, 112, 129]
+# train_idxs = [i for i in range(len(X_loaded_all)) if i not in dev_idxs]
+# X_dev_loaded = [X_loaded_all[i] for i in dev_idxs]
+# Y_dev_loaded = [Y_loaded_all[i] for i in dev_idxs]
+# dev_files_info = [[audio_info[3][i] for i in dev_idxs], [audio_info[4][i] for i in dev_idxs], [audio_info[5][i] for i in dev_idxs]]
+# X_loaded = [X_loaded_all[i] for i in train_idxs]
+# Y_loaded = [Y_loaded_all[i] for i in train_idxs]
+# train_files_info = [[audio_info[j][i] for i in train_idxs] for j in [3, 4, 5]]
+# print(f"dev data: {dev_idxs}")
+# print(f"num of trainig data: {len(X_loaded)}, num of dev data: {len(X_dev_loaded)}")
+# print("dev files:")
+# for i in range(len(dev_idxs)):
+#     print(f"{dev_files_info[0][i]}, {dev_files_info[1][i]}")
+# # print("train files:")
+# # for i in range(len(X_loaded)):
+# #     print(f"{train_files_info[0][i]}, {train_files_info[1][i]}")
 
+# total_audio_length = 0
+# for file_info in dev_files_info[2]:
+#     total_audio_length += file_info["duration"]
+# print(f"dev total audio length: {total_audio_length} seconds")
+
+# total_audio_length = 0
+# for file_info in train_files_info[2]:
+#     total_audio_length += file_info["duration"]
+# print(f"train total audio length: {total_audio_length} seconds")
 
 
 # eval data
@@ -101,6 +110,11 @@ if debug:
     Y_val_loaded = [y[:20134] for y in Y_val_loaded]
 print(f"num of eval data: {len(X_val_loaded)}")
 
+total_audio_length = 0
+for file_info in val_info[5]:
+    total_audio_length += file_info["duration"]
+print(f"eval total audio length: {total_audio_length} seconds")
+'''
 del X_loaded_all, Y_loaded_all
 gc.collect()
 
@@ -233,3 +247,4 @@ for f_test in range(1):
 print(f"Total time: {time.time() - start_time:.2f} seconds, {training_time/60:.2f} minutes, {training_time/3600:.2f} hours")
 print("\n----------------------------------------\n\n\n")
         
+'''

@@ -10,47 +10,41 @@ import librosa
 
 def plot_result(y_actual, y_pred, processed_predictions=None, additional=None, path="", file_name="sad_prediction_comparison.png", debug=False, title="actual vs predictions"):    
     # Plotting in subplots
-    fig, axs = plt.subplots(3, 1, figsize=(15, 10))
+    fig, axs = plt.subplots(2, 1, figsize=(12, 6))
 
-    # Plot the actual labels
-    axs[0].plot(y_actual, label="Actual", color="green")
-    axs[0].set_ylabel("Actual")
-    axs[0].legend(loc="upper right")
+    # # Plot smoothed predictions
+    # #axs[0].plot(y_pred, label="Predikce", color="blue", alpha=0.5)
+    # if processed_predictions is not None:
+    #     axs[0].plot(processed_predictions, label="výstup modelu", color="red", linestyle='--')
+    # #axs[0].set_ylabel("P")
+    # #axs[0].legend(loc="lower right")
+    
+    
+    # # Plot actual labels
+    # axs[0].plot(y_actual, label="pravdivé výsledky", color="green", alpha=0.5)
+    # #axs[0].set_ylabel("výstup modelu a pravdivé výsledky")
+    # axs[0].set_title("výstup modelu a pravdivé výsledky")
+    # # axs[0].legend(loc="lower center")
+    
+    x_vals = np.arange(0, len(y_actual)) / 100
+    
+    axs[0].plot(x_vals, y_actual, label="Predikce modelu", color="green", alpha=0.8)
+    axs[0].plot(x_vals, processed_predictions, label="Výstup modelu", color="blue", linestyle='--', alpha=0.5)
+    axs[0].set_title("Výstup modelu a pravdivé výsledky")
+    axs[0].set_xlabel("Čas [s]")
+    axs[0].legend()
 
-    # Plot the raw and smoothed predictions
-    axs[1].plot(y_pred, label="Predictions", color="blue", alpha=0.5)
-    if processed_predictions is not None:
-        axs[1].plot(processed_predictions, label="Outputs", color="red", linestyle='--')
-    axs[1].set_ylabel("Predictions")
-    axs[1].legend(loc="upper right")
+    axs[1].imshow(x_vals, additional.T, aspect='auto', cmap='jet', origin='lower')
+    axs[1].set_ylabel("Koeficient")
+    axs[1].set_xlabel("Čas [s]")
+    axs[1].set_title("MFCC")
+    
+    x_lim = axs[1].get_xlim()
+    axs[0].set_xlim(x_lim)
 
-    # Plot the difference (absolute error)
-    # difference = np.abs(y_actual - y_pred)
-    # axs[2].plot(difference, label="Absolute Difference", color="purple")
-    # axs[2].set_ylabel("Difference")
-    # axs[2].set_xlabel("Time Steps")
-    # axs[2].legend(loc="upper right")
-    # y = additional[1]
-    # sr = additional[2]
-    # if additional is not None:
-    #     S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, fmax=8000)
-    #     S_dB = librosa.power_to_db(S, ref=np.max)
-
-    #     img = librosa.display.specshow(S_dB, sr=sr, x_axis='time', y_axis='mel', cmap='coolwarm', ax=axs[2])
-    #     img = librosa.display.specshow(S_dB, sr=sr, x_axis='time', y_axis='mel', cmap='coolwarm', ax=axs[2])
-    #     fig.colorbar(img, ax=axs[2], format='%+2.0f dB')
-    #     axs[2].set_xlabel("Time")
-    #     axs[2].set_ylabel("Frequency (Hz)")
-
-    if additional is not None:
-        axs[2].plot(additional, label="Smoothed", color="blue", alpha=0.5)
-    if processed_predictions is not None:
-        axs[2].plot(processed_predictions, label="Outputs", color="red", linestyle='--', alpha=0.5)
-    axs[2].set_ylabel("Predictions")
-    axs[2].legend(loc="upper right")
-
+    #plt.subplots_adjust(hspace=2)
     plt.suptitle(title)
-    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    plt.tight_layout(pad=2.0, rect=[0, 0.03, 1, 0.95])
     plt.savefig(os.path.join(path, file_name))
     if debug:
         plt.show()
@@ -153,25 +147,6 @@ def check_gradients(asd_model):
                 print(f"Warning: Exploding gradient detected in {name}")
             elif grad_norm < 1e-6:  # Threshold for vanishing gradients
                 print(f"Warning: Vanishing gradient detected in {name}")
-                
-def smooth_outputs(smooth_preds, avg_frames=5, criteria=None):
-    # unfolded = smooth_preds.unfold(0, avg_frames, 1).mean(dim=-1)
-    # smooth_preds[:-(avg_frames-1)] = unfolded
-    # smooth_preds[-(avg_frames-1):] = smooth_preds[-avg_frames:].mean()
-    # if criteria is not None:
-    #     smooth_preds = (smooth_preds >= criteria).float()
-    # # for i in range(smooth_preds.size(0)-avg_frames):
-    # #     smooth_preds[i] = smooth_preds[i:i+avg_frames].mean()
-    # #     smooth_preds[-avg_frames:] = smooth_preds[-avg_frames-1] # TODO: reconsider
-    # #     smooth_preds = (smooth_preds >= 0.5).float()
-    # return smooth_preds
-    # smooth_preds = smooth_preds.transpose(1, 2)
-    # kernel = torch.ones(avg_frames) / avg_frames
-    # kernel = kernel.to(smooth_preds.device)
-    # smoothed = F.conv1d(smooth_preds.unsqueeze(1), kernel.view(1, 1, -1), padding=avg_frames // 2)
-    # smoothed = (smoothed >= criteria).float()
-    # return smoothed.squeeze(1)
-    pass
 
 def smooth_outputs_rnn(smooth_preds, avg_frames=5, criteria=None):
     
@@ -190,73 +165,3 @@ def smooth_outputs_rnn(smooth_preds, avg_frames=5, criteria=None):
     # if criteria is not None:
     #     smooth_preds = (smooth_preds >= criteria).float()
     # return smooth_preds
-
-# def plot_result_plotly(y_actual, y_pred, processed_predictions=None, path="", file_name="sad_prediction_comparison.png", debug=False):    
-#     # Plotting in subplots
-#     fig = go.Figure()
-
-#     # Add ground truth as a heatmap-like trace
-#     fig.add_trace(go.Heatmap(
-#         z=[y_actual.squeeze()],
-#         colorscale=[[0, 'white'], [1, 'green']],
-#         showscale=False,
-#         name='Actual'
-#     ))
-
-#     # Add predictions as a second heatmap-like trace
-#     fig.add_trace(go.Heatmap(
-#         z=[processed_predictions.squeeze()],
-#         colorscale=[[0, 'white'], [1, 'blue']],
-#         showscale=False,
-#         name='Predictions'
-#     ))
-
-#     # Adjust layout for clarity
-#     fig.update_layout(
-#         title="SAD Model Prediction vs Ground Truth",
-#         xaxis_title="Time Steps",
-#         yaxis_title="",
-#         yaxis=dict(
-#             showticklabels=False  # Hide y-axis labels to emphasize the binary coloring
-#         ),
-#         height=400
-#     )
-
-#     # Show and save the figure
-#     fig.show()
-#     fig.write_image(path + file_name)
-
-
-
-
-
-
-# batch_x, batch_y, mask = batch_x.to(device), batch_y.to(device), mask.to(device)
-                    
-#                     optimizer.zero_grad()
-                    
-#                     # Forward
-#                     outputs = sad_model(batch_x)
-#                     #print(outputs.mean())
-#                     loss = criterion(outputs, batch_y)
-                    
-#                     preds = (outputs >= criteria).float()
-#                     correct_predictions += ((preds == batch_y).float() * mask).sum().item()
-#                     total_predictions += mask.sum().item()
-                    
-#                     # plot_result(batch_y[0].cpu().numpy(), preds[0].cpu().numpy(), outputs[0].cpu().detach().numpy(), path=datadir_path, file_name="sad_prediction_comparison" + str(i) + ".png", debug=False)
-#                     # i += 1
-                    
-#                     #print("predsum: ", preds.sum(), "batch_y sum: ", batch_y.sum())
-                    
-#                     #print(preds.shape)
-#                     # Backward
-#                     loss.backward()
-#                     optimizer.step()
-#                     fp_time += (((preds == 1) & (batch_y == 0)) * mask).sum().item()
-#                     fn_time += (((preds == 0) & (batch_y == 1)) * mask).sum().item()
-#                     y_speech_time += (batch_y * mask).sum().item()
-#                     y_nonspeech_time += ((batch_y == 0) * mask).sum().item()
-                    
-#                     #print(fp_time, fn_time, y_speech_time, y_nonspeech_time)
-#                     running_loss += loss.item()

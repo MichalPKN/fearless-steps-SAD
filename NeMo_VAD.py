@@ -15,7 +15,6 @@ vad_model.spec_augmentation = None  # Disable augmentation
 vad_model.eval()
 vad_model = vad_model.to(device)
 
-# Function to process and classify a wav file
 def classify_audio(audio_path):
     audio, sr = librosa.load(audio_path, sr=16000, mono=True)
 
